@@ -1,0 +1,9 @@
+# editor artifacts
+*~
+.*.swp
+
+# build artifacts
+*.o
+
+# binaries
+repl
