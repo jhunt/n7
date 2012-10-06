@@ -34,7 +34,7 @@ VAL* vnil(void)
 {
 	VAL *val = malloc(sizeof(VAL));
 	if (!val) {
-		ERR("out of memory");
+		ERR("new value: out of memory");
 	}
 	val->type = VTYPE_NIL;
 	return val;
@@ -68,7 +68,10 @@ VAL* vchar(unsigned char c)
 
 VAL* cons(VAL *car, VAL *cdr)
 {
-	CONS *cons = malloc(sizeof(CONS)); /* FIXME: handle errors */
+	CONS *cons = malloc(sizeof(CONS));
+	if (!cons) {
+		ERR("cons: out of memory");
+	}
 	cons->car = car;
 	cons->cdr = cdr;
 
