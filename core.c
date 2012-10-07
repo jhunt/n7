@@ -2,6 +2,11 @@
 #include <stdio.h>
 
 #include "core.h"
+#include "q.h"
+
+static Q GC_HEAP = { &GC_HEAP, &GC_HEAP };
+
+/*************************************************************/
 
 void ERR(const char *msg)
 {
@@ -16,14 +21,22 @@ VAL* ref(VAL *val)
 {
 	if (val) {
 		val->refs++;
+		if (val->type == VTYPE_CONS) {
+			ref(val->value.cons->car);
+			ref(val->value.cons->cdr);
+		}
 	}
 	return val;
 }
 
 VAL* deref(VAL *val)
 {
-	if (val) {
+	if (val && val->refs != 0) {
 		val->refs--;
+		if (val->type == VTYPE_CONS) {
+			deref(val->value.cons->car);
+			deref(val->value.cons->cdr);
+		}
 	}
 	return val;
 }
@@ -36,6 +49,8 @@ VAL* vnil(void)
 	if (!val) {
 		ERR("new value: out of memory");
 	}
+	q_append(&GC_HEAP, &val->l_gc);
+	val->refs = 0;
 	val->type = VTYPE_NIL;
 	return val;
 }
@@ -66,16 +81,57 @@ VAL* vchar(unsigned char c)
 
 /*************************************************************/
 
+void gc(void)
+{
+	VAL *v, *tmp;
+	size_t bytes_freed = 0;
+	for_each_safe(&GC_HEAP, v, tmp, l_gc) {
+		if (v->refs == 0) {
+			bytes_freed += gc_free(v);
+		}
+	}
+
+	if (bytes_freed > 0) { gc(); }
+}
+
+size_t gc_free(VAL *val)
+{
+	size_t bytes = sizeof(VAL);
+	switch (val->type) {
+		case VTYPE_NIL:
+		case VTYPE_FIXNUM:
+		case VTYPE_CHAR:
+			break; /* direct-storage, nothing to free */
+
+		case VTYPE_CONS:
+			deref(val->value.cons->car);
+			deref(val->value.cons->cdr);
+			bytes += sizeof(CONS);
+			free(val->value.cons);
+			break;
+
+		default:
+			ERR("unknown value type");
+			return 0;
+	}
+
+	q_remove(&val->l_gc);
+	free(val);
+	return bytes;
+}
+
+/*************************************************************/
+
 VAL* cons(VAL *car, VAL *cdr)
 {
 	CONS *cons = malloc(sizeof(CONS));
 	if (!cons) {
 		ERR("cons: out of memory");
 	}
-	cons->car = car;
-	cons->cdr = cdr;
+	cons->car = ref(car);
+	cons->cdr = ref(cdr);
 
-	return ref(vcons(cons));
+	return vcons(cons);
 }
 
 VAL* car(VAL *cons)
@@ -93,3 +149,14 @@ VAL* cdr(VAL *cons)
 }
 
 /*************************************************************/
+
+void dump_gc(void)
+{
+	VAL *v;
+	int i = 0;
+	for_each(&GC_HEAP, v, l_gc) {
+		printf("%i: %p (%s (refs %u))\n",
+			i++, v, VAL_TYPES[v->type], v->refs);
+	}
+}
+

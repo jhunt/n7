@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include "core.h"
 
 int main(int argc, char **argv)
 {
-	VAL *lst = cons(
+	VAL *lst =
+		ref(cons(
 			vfixnum(1),
 			cons(
 				vfixnum(2),
@@ -10,7 +12,15 @@ int main(int argc, char **argv)
 					vfixnum(3),
 					cons(
 						vfixnum(4),
-						vnil()))));
+						vnil())))));
+	printf("===========================\n"); dump_gc();
 
+	deref(lst);
+	printf("===========================\n"); dump_gc();
+
+	gc();
+	printf("===========================\n"); dump_gc();
+
+	lst = NULL; /* for valgrind */
 	return 0;
 }
