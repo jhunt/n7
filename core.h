@@ -46,7 +46,7 @@ VAL* vcons(CONS *cons);
 VAL* vfixnum(signed long n);
 VAL* vchar(unsigned char c);
 
-/* garbage collection */
+/* memory management / garbage collection */
 void gc(void);
 size_t gc_free(VAL *val);
 
