@@ -7,3 +7,6 @@
 
 # binaries
 repl
+
+# tests
+t/*test
