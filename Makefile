@@ -1,3 +1,5 @@
+CFLAGS := -g
+
 repl: repl.o core.o
 
 clean:
