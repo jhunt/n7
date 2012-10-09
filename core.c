@@ -3,11 +3,13 @@
 #include <stdio.h>
 
 #include "core.h"
+#include "gc.h"
 
 static obj SYMBOLS = 0;
 obj nil;
 
 static POOL CONS_HEAP = {
+#include "gc.h"
 	.next = NULL,
 	.map  = ~0UL,
 	.ptrsz = sizeof(CONS)
@@ -16,7 +18,8 @@ static POOL CONS_HEAP = {
 static CONS*
 mkcons(obj car, obj cdr)
 {
-	CONS *cons = halloc(&CONS_HEAP);
+	CONS *cons = xalloc();
+	//CONS *cons = halloc(&CONS_HEAP);
 	cons->car = car;
 	cons->cdr = cdr;
 	return cons;
@@ -164,6 +167,7 @@ INIT(void)
 {
 	nil = mksym("nil");
 	SYMBOLS = nil;
+	gc_init(64);
 }
 
 /**  Debugging Functions  ***************************************/
