@@ -3,16 +3,18 @@
 
 int main(int argc, char **argv)
 {
-	VAL *lst =
-		ref(cons(
-			vfixnum(1),
+	INIT();
+	obj lst =
+		cons(
+			mkfixnum(1),
 			cons(
-				vfixnum(2),
+				mkfixnum(2),
 				cons(
-					vfixnum(3),
+					mkfixnum(3),
 					cons(
-						vfixnum(4),
-						vnil())))));
+						mkfixnum(4),
+						nil))));
+/*
 	printf("===========================\n"); dump_gc();
 
 	deref(lst);
@@ -20,7 +22,9 @@ int main(int argc, char **argv)
 
 	gc();
 	printf("===========================\n"); dump_gc();
+*/
 
-	lst = NULL; /* for valgrind */
+	lst = nil; /* for valgrind */
+	gc();
 	return 0;
 }

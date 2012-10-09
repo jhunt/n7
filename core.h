@@ -1,61 +1,63 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include "q.h"
+void INIT(void);
 
-#define VTYPE_NIL      0
-#define VTYPE_CONS     1
-#define VTYPE_FIXNUM   2
-#define VTYPE_CHAR     3
+/* tagged pointers */
+typedef unsigned long obj;
+/* FIXME: mark-sweep gc - use 0x8 as 'marked' bit */
+#define TAGMASK 0x0FL
+#define lotag(p)  ((obj)(p) &  TAGMASK)
+#define hitag(p)  ((obj)(p) & ~TAGMASK)
+#define tag(p,t)  (hitag(p)|(t))
+#define untag(p)  (void*)(hitag(p))
 
-static const char* VAL_TYPES[] = {
-	"NIL",
-	"CONS",
-	"FIXNUM",
-	"CHAR"
-};
+/* TAG values can range from 0x0 (000) to 0x7 (111) */
+#define TAG_FIXNUM 0x0
+#define TAG_SYMBOL 0x1
+#define TAG_CONS   0x2
+#define TAG_OP     0x3
 
-struct cons;
+/* nihilistic tendencies */
+extern obj nil;
+#define nilp(x) ((x) == nil)
 
-typedef struct val {
-	Q l_gc;
-	int type;
-	union {
-		struct cons *cons;
-		signed long fixnum;
-		unsigned char c;
-	} value;
-	unsigned int refs;
-} VAL;
-
-typedef struct cons {
-	VAL *car;
-	VAL *cdr;
+/* consing to a better tomorrow */
+typedef struct {
+	obj car;
+	obj cdr;
 } CONS;
 
-/* bail out, with an error */
-void ERR(const char *msg);
+obj cons (obj car, obj cdr);
+#define car(cons) (((CONS*)(untag(cons)))->car)
+#define cdr(cons) (((CONS*)(untag(cons)))->cdr)
+#define for_list(obj, list) \
+	for (obj = (list); !nilp(obj); obj = cdr(obj))
 
-/* helpers for managing ref counts */
-VAL* ref(VAL *val);
-VAL* deref(VAL *val);
+/* symbol manipulation */
+obj intern(const char *name);
 
-/* helpers for creating typed values */
-VAL* vnil(void);
-VAL* vcons(CONS *cons);
-VAL* vfixnum(signed long n);
-VAL* vchar(unsigned char c);
+/* fixed-sized numbers */
+#define mkfixnum(n) ((n) << TAGMASK)   /* implementation detail: */
+#define fixnum(v)   ((v) >> TAGMASK)   /*   fixnum tag is 0x0    */
 
-/* memory management / garbage collection */
+/* garbage collection */
+#define GC_POOLSZ 32
+struct pool;
+typedef struct pool {
+	struct pool *next;
+	unsigned long map;
+	size_t ptrsz;
+	char ptrs[];
+} POOL;
+
+void* halloc(POOL *p);
+void  hfree(POOL *p, void *ptr);
 void gc(void);
-size_t gc_free(VAL *val);
 
-/* functions for dealing with conses */
-VAL* cons(VAL *car, VAL *cdr);
-VAL* car(VAL *cons);
-VAL* cdr(VAL *cons);
-
-/* debugging functions */
-void dump_gc(void);
+/* debugging; it happens to the best of us */
+void dump_obj(obj o);
+void dump_sym(obj sym);
+void dump_syms(void);
 
 #endif
