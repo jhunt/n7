@@ -20,8 +20,9 @@ test: $(TEST_FILES)
 	prove -o $+
 
 coverage:
+	make clean test
 	$(LCOV) --capture -o $@.tmp
-	$(LCOV) --remove $@.tmp > lcov.info
+	$(LCOV) --remove $@.tmp t/* > lcov.info
 	rm -f $@.tmp
 	rm -rf doc/coverage
 	mkdir -p doc
@@ -37,6 +38,7 @@ clean:
 	find . -name '*.o' | xargs -r rm -f
 	find . -name '*.gc??' | xargs -r rm -f
 	rm -f t/*.t
+	rm -rf doc/coverage
 	rm -f repl sizes
 
 t/%.t: t/%.o core.o t/assert.o t/test.h
