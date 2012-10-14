@@ -4,6 +4,10 @@
 
 # build artifacts
 *.o
+*.gcno
+*.gcda
+lcov.info
+doc/coverage
 
 # binaries
 repl
