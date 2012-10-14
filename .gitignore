@@ -11,4 +11,4 @@ syms
 sizes
 
 # tests
-t/*test
+*.t

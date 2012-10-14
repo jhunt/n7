@@ -1,6 +1,12 @@
 CFLAGS := -g
 
-all: repl syms
+TEST_FILES := $(shell find t -name '*.c' | sed -e 's/.c$$/.t/')
+BINARIES := repl syms sizes
+
+all: test $(BINARIES)
+
+test: $(TEST_FILES)
+	prove $+
 
 repl: repl.o core.o
 syms: syms.o core.o
@@ -10,7 +16,8 @@ clean:
 	rm -f repl
 	rm -f syms
 	rm -f sizes
-	rm -f t/*test
+	rm -f t/*.t t/*.o
 
-#test: t/qtest
-#	echo $+ | xargs -n 1 /bin/sh -c
+t/%.t: t/%.o core.o t/test.h
+	$(CC) -o $@ $< core.o
+
