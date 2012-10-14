@@ -95,7 +95,6 @@ findsym(unsigned int key, const char *name)
 {
 	obj rest;
 	for_list(rest, SYMBOL_TABLE[key]) {
-		fprintf(stderr, "checking %s against %s\n", name, car(rest)->value.sym.name);
 		if (strcasecmp(name, car(rest)->value.sym.name) == 0) {
 			return car(rest);
 		}

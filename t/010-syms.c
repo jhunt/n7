@@ -1,19 +1,13 @@
-#include "test.h"
+#include "assert.h"
 #include "../core.h"
 
 int main(int argc, char **argv)
 {
 	INIT();
 
-	diag("Basic Intern Tests");
-	obj a, b;
-	a = intern("SYM");
-	b = intern("sym");
-	if (a == b) {
-		pass("SYM == sym (case-insensitive intern)");
-	} else {
-		fail("SYM != sym (case-insensitive intern)");
-	}
+	//printf("1..N # basic intern tests\n");
+	sym_is("sym", "sym", "Symbols only get interned once");
+	sym_is("SYM", "sym", "Symbol names are case-insensitive");
 
 	done_testing();
 	return 0;
