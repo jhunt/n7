@@ -1,35 +1,89 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "core.h"
-#include "gc.h"
 
-static obj SYMBOLS = 0;
-obj nil;
-
-static POOL CONS_HEAP = {
-#include "gc.h"
-	.next = NULL,
-	.map  = ~0UL,
-	.ptrsz = sizeof(CONS)
-};
-
-static CONS*
-mkcons(obj car, obj cdr)
+static void
+_abort(const char *m, const char *f, unsigned long lineno)
 {
-	CONS *cons = xalloc();
-	//CONS *cons = halloc(&CONS_HEAP);
-	cons->car = car;
-	cons->cdr = cdr;
-	return cons;
+	fprintf(stderr, "ABORT @%s:%lu: %s\n", f, lineno, m);
+	exit(42);
 }
+#define ABORT(m) _abort(m,__FILE__,__LINE__)
+
+static obj
+OBJECT(unsigned short type, size_t varlen)
+{
+	obj o = calloc(1,sizeof(bigobj)+varlen);
+	if (!o) ABORT("malloc failed");
+	o->type = type;
+	return o;
+}
+
+static unsigned int
+hash(const char *str, unsigned int lim)
+{
+	/* the positively stupidest hashing function you ever did meet */
+	if (!str) return 0;
+	return *str % lim;
+}
+
+static char*
+lc(const char *s)
+{
+	char *new = strdup(s);
+	char *p;
+	for (p = new; *p; p++) {
+		if (isupper(*p)) *p = tolower(*p);
+	}
+	return new;
+}
+
+/**************************************************/
+
+#define SYMBOL_TABLE_SIZE 211
+obj SYMBOL_TABLE[SYMBOL_TABLE_SIZE];
+
+/**  Initialization  ********************************************/
+
+void
+INIT(void)
+{
+	unsigned int i;
+	for (i = 0; i < SYMBOL_TABLE_SIZE; i++) {
+		SYMBOL_TABLE[i] = NIL;
+	}
+}
+
+/**************************************************/
 
 obj
 cons(obj car, obj cdr)
 {
-	CONS* cons = mkcons(car, cdr);
-	return tag(cons, TAG_CONS);
+	obj c = OBJECT(OBJ_CONS, 0);
+	c->value.cons.car = car;
+	c->value.cons.cdr = cdr;
+	return c;
+}
+
+obj
+car(obj cons)
+{
+	if (!cons) ABORT("car() called with NULL cons");
+	if (!IS_CONS(cons)) ABORT("car() called with non-cons arg");
+
+	return cons->value.cons.car;
+}
+
+obj
+cdr(obj cons)
+{
+	if (!cons) ABORT("cdr() called with NULL cons");
+	if (!IS_CONS(cons)) ABORT("cdr() called with non-cons arg");
+
+	return cons->value.cons.cdr;
 }
 
 /**  Symbols  ***************************************************/
@@ -37,137 +91,43 @@ cons(obj car, obj cdr)
 #define symname(cons) (const char*)untag((car(cons)))
 
 static obj
-findsym(const char *name)
+findsym(unsigned int key, const char *name)
 {
 	obj rest;
-	for_list(rest, SYMBOLS) {
-		fprintf(stderr, "checking %p (%s) against %s\n",
-				untag(rest), symname(rest), name);
-		if (strcasecmp(name, symname(rest)) == 0) {
-			return rest;
+	for_list(rest, SYMBOL_TABLE[key]) {
+		fprintf(stderr, "checking %s against %s\n", name, car(rest)->value.sym.name);
+		if (strcasecmp(name, car(rest)->value.sym.name) == 0) {
+			return car(rest);
 		}
 	}
-	return nil;
+	return NIL;
 }
 
-static char*
-mkname(const char *orig)
+static obj
+mksym(unsigned int key, const char *name)
 {
-	char *new = strdup(orig);
-	char *p;
-	for (p = new; *p; p++) {
-		if (isupper(*p)) {
-			*p = tolower(*p);
-		}
-	}
-	return new;
+	size_t len = strlen(name)+1;
+	obj S = OBJECT(OBJ_SYMBOL, len);
+	S->value.sym.len = len;
+	strncpy(S->value.sym.name, name, len);
+
+	push(SYMBOL_TABLE[key], S);
+	return S;
 }
-#define mksym(name) tag(mkname(name), TAG_SYMBOL)
 
 obj
 intern(const char *name)
 {
-	obj sym;
-	sym = findsym(name);
-	if (!nilp(sym)) {
-		return sym;
-	}
-	SYMBOLS = cons(mksym(name), SYMBOLS);
-	return SYMBOLS;
-}
+	char *symname = lc(name);
+	unsigned int key = hash(symname, SYMBOL_TABLE_SIZE);
+	obj sym = findsym(key, symname);
 
-/**  Garbage Collection  ****************************************/
-
-#define nmask(i) (1 << (i))
-
-#define gc_slot(p,slot)    ((p)->ptrs + ((slot)*((p)->ptrsz)))
-#define gc_ptr(p,ptr)      (((char*)(ptr) - (char*)((p)->ptrs)) / (p)->ptrsz)
-
-#define gc_avail(p,slot)   (!((p)->map & nmask(slot)))
-#define gc_claim(p,slot)   ((p)->map = (p)->map | nmask(slot))
-#define gc_forfeit(p,slot) ((p)->map = (p)->map & ~nmask(slot))
-
-#define between(n,x,y)     ((n) >= (x) && (n) <= (y))
-#define gc_pool_has(p,ptr) between((char*)(ptr), (p)->ptrs, (char*)((p)+sizeof(*(p))))
-#define gc_pool_empty(p)   ((p)->map == ~0)
-
-static void*
-gc_next(POOL *p)
-{
-	int i;
-	for (i = 0; i < GC_POOLSZ; i++) {
-		if (gc_avail(p,i)) {
-			gc_claim(p,i);
-			return (void*)(gc_slot(p,i));
-		}
-	}
-}
-
-static POOL*
-gc_pool(size_t ptrsz)
-{
-	POOL *p = malloc(sizeof(POOL) + (GC_POOLSZ * ptrsz));
-	p->ptrsz = ptrsz;
-	p->map = 0;
-	p->next = NULL;
-
-	return p;
-}
-
-void*
-halloc(POOL *p)
-{
-	POOL *tail;
-	for (tail = p, p = p->next; p; tail = p, p = p->next) {
-		if (gc_pool_empty(p)) {
-			continue;
-		}
-		return gc_next(p);
+	if (IS_NIL(sym)) {
+		sym = mksym(key, symname);
 	}
 
-	tail->next = gc_pool(tail->ptrsz);
-	return gc_next(tail->next);
-}
-
-void
-hfree(POOL *p, void *ptr)
-{
-	for (p = p->next; p; p = p->next) {
-		if (!gc_pool_has(p, ptr)) {
-			continue;
-		}
-		gc_forfeit(p, gc_ptr(p, ptr));
-	}
-}
-
-static void
-gc_walk_pool (POOL *p)
-{
-	POOL *tail;
-	for (tail = p, p = p->next; p; tail = p, p = p->next) {
-		/* FIXME: not ref-counting objects... */
-		if (gc_pool_empty(p)) {
-			tail->next = p->next;
-			free(p);
-			p = tail;
-		}
-	}
-}
-
-void gc(void)
-{
-	gc_walk_pool(&CONS_HEAP);
-	/* FIXME: how do we reclaim interned symbol memory? */
-}
-
-/**  Initialization  ********************************************/
-
-void
-INIT(void)
-{
-	nil = mksym("nil");
-	SYMBOLS = nil;
-	gc_init(64);
+	free(symname);
+	return sym;
 }
 
 /**  Debugging Functions  ***************************************/
@@ -183,16 +143,22 @@ void
 dump_sym(obj sym)
 {
 	fprintf(stderr, "sym:[%#08lx:%#01lx >> %s]\n",
-			hitag(sym), lotag(sym), (char*)untag(sym));
+			hitag(sym), lotag(sym), sym->value.sym.name);
 }
 
 void
 dump_syms(void)
 {
 	obj rest;
-	for_list(rest, SYMBOLS) {
-		dump_obj(car(rest));
-		dump_sym(car(rest));
+	size_t i;
+	for (i = 0; i < SYMBOL_TABLE_SIZE; i++) {
+		if (!IS_NIL(SYMBOL_TABLE[i])) {
+			fprintf(stderr, "SYMBOL_TABLE[%lu] = \n", (unsigned long)i);
+			for_list(rest, SYMBOL_TABLE[i]) {
+				dump_obj(car(rest));
+				dump_sym(car(rest));
+			}
+		}
 	}
 	fprintf(stderr, "-----------------\n");
 }

@@ -6,25 +6,14 @@ int main(int argc, char **argv)
 	INIT();
 	obj lst =
 		cons(
-			mkfixnum(1),
+			intern("A"),
 			cons(
-				mkfixnum(2),
+				intern("B"),
 				cons(
-					mkfixnum(3),
+					intern("C"),
 					cons(
-						mkfixnum(4),
-						nil))));
-/*
-	printf("===========================\n"); dump_gc();
-
-	deref(lst);
-	printf("===========================\n"); dump_gc();
-
-	gc();
-	printf("===========================\n"); dump_gc();
-*/
-
-	lst = nil; /* for valgrind */
-	gc();
+						intern("D"),
+						NIL))));
+	lst = NIL; /* for valgrind */
 	return 0;
 }
