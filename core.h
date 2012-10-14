@@ -2,6 +2,7 @@
 #define CORE_H
 
 #include <stdlib.h>
+#include <setjmp.h>
 
 #define TAGGED_BITS 8
 #define TAGGED_MASK 0xf
@@ -46,7 +47,15 @@ struct big_object {
 
 /**************************************************/
 
+void on_abort(jmp_buf *jmp);
+void _abort(const char *file, unsigned int line, const char *msg);
+#define abort(m) _abort(__FILE__, __LINE__, (m))
+
+/**************************************************/
+
 void INIT(void);
+
+unsigned int hash(const char *str, unsigned int lim);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);

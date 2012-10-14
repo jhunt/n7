@@ -61,4 +61,14 @@ bail(const char *msg)
 	exit(1);
 }
 
+inline void
+ok(int expr, const char *msg)
+{
+	if (expr) {
+		pass(msg);
+	} else {
+		fail(msg);
+	}
+}
+
 #endif

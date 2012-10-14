@@ -2,32 +2,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include "core.h"
 
-static void
-_abort(const char *m, const char *f, unsigned long lineno)
-{
-	fprintf(stderr, "ABORT @%s:%lu: %s\n", f, lineno, m);
-	exit(42);
-}
-#define ABORT(m) _abort(m,__FILE__,__LINE__)
+/* abort-specific implementation details */
+static jmp_buf *ABORT_JMP = NULL;
 
 static obj
 OBJECT(unsigned short type, size_t varlen)
 {
 	obj o = calloc(1,sizeof(bigobj)+varlen);
-	if (!o) ABORT("malloc failed");
+	if (!o) abort("malloc failed");
 	o->type = type;
 	return o;
-}
-
-static unsigned int
-hash(const char *str, unsigned int lim)
-{
-	/* the positively stupidest hashing function you ever did meet */
-	if (!str) return 0;
-	return *str % lim;
 }
 
 static char*
@@ -46,6 +34,28 @@ lc(const char *s)
 #define SYMBOL_TABLE_SIZE 211
 obj SYMBOL_TABLE[SYMBOL_TABLE_SIZE];
 
+/**************************************************/
+
+void
+_abort(const char *file, unsigned int line, const char *msg)
+{
+	fprintf(stderr, "ABORT @%s:%u: %s\n", file, line, msg);
+
+	/* LCOV_EXCL_START */
+	if (ABORT_JMP) {
+		longjmp(*ABORT_JMP, 42);
+	} else {
+		fprintf(stderr, "So long, and thanks for all the fish!\n");
+		exit(42);
+	}
+	/* LCOV_EXCL_STOP */
+}
+
+void on_abort(jmp_buf *jmp)
+{
+	ABORT_JMP = jmp;
+}
+
 /**  Initialization  ********************************************/
 
 void
@@ -55,6 +65,14 @@ INIT(void)
 	for (i = 0; i < SYMBOL_TABLE_SIZE; i++) {
 		SYMBOL_TABLE[i] = NIL;
 	}
+}
+
+unsigned int
+hash(const char *str, unsigned int lim)
+{
+	/* the positively stupidest hashing function you ever did meet */
+	if (!str) return 0;
+	return *str % lim;
 }
 
 /**************************************************/
@@ -71,8 +89,9 @@ cons(obj car, obj cdr)
 obj
 car(obj cons)
 {
-	if (!cons) ABORT("car() called with NULL cons");
-	if (!IS_CONS(cons)) ABORT("car() called with non-cons arg");
+	if (!cons) abort("car() called with NULL cons");
+	if (IS_NIL(cons)) return NIL;
+	if (!IS_CONS(cons)) abort("car() called with non-cons arg");
 
 	return cons->value.cons.car;
 }
@@ -80,8 +99,9 @@ car(obj cons)
 obj
 cdr(obj cons)
 {
-	if (!cons) ABORT("cdr() called with NULL cons");
-	if (!IS_CONS(cons)) ABORT("cdr() called with non-cons arg");
+	if (!cons) abort("cdr() called with NULL cons");
+	if (IS_NIL(cons)) return NIL;
+	if (!IS_CONS(cons)) abort("cdr() called with non-cons arg");
 
 	return cons->value.cons.cdr;
 }
@@ -117,6 +137,8 @@ mksym(unsigned int key, const char *name)
 obj
 intern(const char *name)
 {
+	if (!name) return NIL;
+
 	char *symname = lc(name);
 	unsigned int key = hash(symname, SYMBOL_TABLE_SIZE);
 	obj sym = findsym(key, symname);
@@ -131,6 +153,7 @@ intern(const char *name)
 
 /**  Debugging Functions  ***************************************/
 
+/* LCOV_EXCL_START */
 void
 dump_obj(obj o)
 {
@@ -161,3 +184,4 @@ dump_syms(void)
 	}
 	fprintf(stderr, "-----------------\n");
 }
+/* LCOV_EXCL_STOP */
