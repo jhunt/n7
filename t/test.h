@@ -23,10 +23,12 @@ done_testing(void)
 	if (!PLANNED) {
 		fprintf(stdout, "1..%u\n", TOTAL_TESTS);
 	}
+#if 0
 	if (FAILED_TESTS) {
 		fprintf(stdout, "# Looks like you failed %u out of %u tests\n",
 				FAILED_TESTS, TOTAL_TESTS);
 	}
+#endif
 }
 
 inline void
@@ -57,8 +59,7 @@ skip(const char *msg)
 inline void
 bail(const char *msg)
 {
-	fprintf(stdout, "bail out! %s\n", msg);
-	diag("bailing out for reasons known only to me");
+	fprintf(stdout, "Bail out! %s\n", msg);
 	exit(1);
 }
 

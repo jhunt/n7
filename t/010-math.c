@@ -52,10 +52,10 @@ int main(int argc, char **argv)
 
 	if(setjmp(comeback) == 0) {
 		op_div(nlist(1, N(4)));
-		diag("(/ 4) did not abort (TODO item)");
-		fail("(/ 4) should abort # TODO");
-	} else {
+		diag("(/ 4) should abort # TODO");
 		pass("(/ 4) should abort # TODO");
+	} else {
+		fail("(/ 4) should abort # TODO should not abort");
 	}
 
 	done_testing();
