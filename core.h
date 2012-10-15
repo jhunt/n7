@@ -1,6 +1,35 @@
 #ifndef CORE_H
 #define CORE_H
 
+/*******************************************************
+
+  TODO:
+
+  LISP ESSENTIALS
+  - support lambda
+  - full reader
+  - funcall stack
+  - map out core operators
+
+  DATA TYPES
+  - vectors
+  - strings
+  - complex numbers
+  - floating point numbers
+  - ratios
+  - bignums
+
+  FFI
+  - syscall interface
+
+  COMPILING
+  - tail-call optimization / CPS?
+  - intermediate language (3-addr?)
+  - code optimizer
+  - machine code translation
+
+********************************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
