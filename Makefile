@@ -17,7 +17,7 @@ BINARIES := repl syms sizes
 all: test $(BINARIES)
 
 test: $(TEST_FILES)
-	prove -o $+
+	prove -o -e '' $+
 
 coverage:
 	make clean test
