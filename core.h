@@ -1,6 +1,16 @@
 #ifndef CORE_H
 #define CORE_H
 
+/**
+
+  eo - v. to go, proceed or advance (Latin)
+
+  Eo is a Lisp dialect that is useful as a system programming
+  language.  It combines the power and expressiveness of Lisp
+  with the speed and independence of compiled machine code.
+
+ **/
+
 /*******************************************************
 
   TODO:
