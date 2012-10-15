@@ -47,6 +47,7 @@ struct big_object {
 #define IS_CONS(obj) IS_A(obj,CONS)
 #define IS_SYM(obj)  IS_A(obj,SYMBOL)
 #define IS_FIXNUM(obj) IS_A(obj,FIXNUM)
+#define IS_BUILTIN(obj) IS_A(obj,BUILTIN)
 
 #define MAKE_CONSTANT(n) (struct big_object*)((n<<TAGGED_BITS)|TAG_CONSTANT)
 #define NIL MAKE_CONSTANT(0)
@@ -87,6 +88,7 @@ obj op_add(obj args);
 obj op_sub(obj args);
 obj op_mult(obj args);
 obj op_div(obj args);
+obj op_apply(obj fn, obj args);
 
 /* debugging; it happens to the best of us */
 void dump_obj(const char *tag, obj o);

@@ -257,6 +257,14 @@ op_div(obj args)
 	return fixnum(acc);
 }
 
+obj
+op_apply(obj fn, obj args)
+{
+	if (!fn) abort("fn cannot be NULL");
+	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");
+	return (*(fn->value.builtin))(args);
+}
+
 /**  Debugging Functions  ***************************************/
 
 /* LCOV_EXCL_START */
