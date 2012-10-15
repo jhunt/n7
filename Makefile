@@ -10,7 +10,7 @@ LDFLAGS := -fprofile-arcs
 LCOV := lcov --directory . --base-directory .
 GENHTML := genhtml --prefix $(shell dirname `pwd`)
 
-TEST_FILES := $(shell find t -name '*.c' | grep -v 'assert.c' | sed -e 's/.c$$/.t/')
+TEST_FILES := $(shell find t -name '*.c' | grep -v 'assert.c' | sort | sed -e 's/.c$$/.t/')
 BINARIES := repl syms sizes
 
 
