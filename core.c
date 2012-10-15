@@ -77,6 +77,88 @@ hash(const char *str, unsigned int lim)
 
 /**************************************************/
 
+static obj
+read_expr(FILE *io)
+{
+	return NIL;
+}
+
+static obj
+read_number(FILE *io)
+{
+	/* FIXME: read_number should support negatives, imaginaries, ratios, decimals, arbitrary base, etc. */
+	long fixn = 0;
+	char d;
+
+	for (d = fgetc(io); d != EOF && isdigit(d); d = fgetc(io)) {
+		fixn = fixn*10 + (d-'0');
+	}
+	return fixnum(fixn);
+}
+
+static obj
+read_symbol(FILE *io)
+{
+	char buf[64] = {0};
+	size_t i;
+	char d;
+
+	for (i = 0, d = fgetc(io); d != EOF && !isspace(d); d = fgetc(io), i++) {
+		/* FIXME: symbol names limited to 64 chars... */
+		if (i < 63) buf[i] = d;
+	}
+
+	return intern(buf);
+}
+
+obj
+readio(FILE *io)
+{
+	char c;
+reread:
+	switch (c = fgetc(io)) {
+	case EOF:
+		return NIL;
+
+	case ';':
+		/* skip comments */
+		for (c = fgetc(io); c != EOF && c != '\n'; c = fgetc(io))
+			;
+		goto reread;
+
+	case ' ':
+	case '\t':
+	case '\r':
+	case '\n':
+		goto reread;
+
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		ungetc(c, io);
+		return read_number(io);
+
+	case '(':
+		return read_expr(io);
+
+	case ')':
+		abort("unexpected ')' in input stream");
+
+	default:
+		ungetc(c, io);
+		return read_symbol(io);
+	}
+}
+
+/**************************************************/
+
 obj
 cons(obj car, obj cdr)
 {

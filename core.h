@@ -2,6 +2,7 @@
 #define CORE_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <setjmp.h>
 
 #define TAGGED_BITS 8
@@ -43,7 +44,7 @@ struct big_object {
 	} value;
 };
 
-#define IS_A(obj,tag) ((obj)->type == OBJ_ ## tag)
+#define IS_A(obj,tag) (lotag(obj) == 0x00 && (obj)->type == OBJ_ ## tag)
 #define IS_CONS(obj) IS_A(obj,CONS)
 #define IS_SYM(obj)  IS_A(obj,SYMBOL)
 #define IS_FIXNUM(obj) IS_A(obj,FIXNUM)
@@ -67,6 +68,9 @@ void _abort(const char *file, unsigned int line, const char *msg);
 void INIT(void);
 
 unsigned int hash(const char *str, unsigned int lim);
+
+/* read... */
+obj readio(FILE *io);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);
