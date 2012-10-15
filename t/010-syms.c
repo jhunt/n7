@@ -12,6 +12,9 @@ int main(int argc, char **argv)
 
 		sym_is("sym", "sym", "Symbols only get interned once");
 		sym_is("SYM", "sym", "Symbol names are case-insensitive");
+
+		ok(IS_NIL(intern("nil")), "nil == nil");
+		ok(IS_T(intern("t")), "t == t");
 	}
 
 	done_testing();

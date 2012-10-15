@@ -176,6 +176,9 @@ intern(const char *name)
 	if (!name) return NIL;
 
 	char *symname = lc(name);
+	if (strcmp(symname, "nil") == 0) return NIL;
+	if (strcmp(symname, "t") == 0)   return T;
+
 	unsigned int key = hash(symname, SYMBOL_TABLE_SIZE);
 	obj sym = findsym(key, symname);
 
