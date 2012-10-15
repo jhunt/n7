@@ -3,11 +3,9 @@
 
 /**
 
-  eo - v. to go, proceed or advance (Latin)
 
-  Eo is a Lisp dialect that is useful as a system programming
-  language.  It combines the power and expressiveness of Lisp
-  with the speed and independence of compiled machine code.
+       n7: a Lisp dialect for system programming
+
 
  **/
 
