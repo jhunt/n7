@@ -5,9 +5,11 @@
 char*
 str(const char *fmt, ...)
 {
+	size_t len;
+
 	va_list ap;
 	va_start(ap, fmt);
-	size_t len = vsnprintf(NULL, 0, fmt, ap);
+	len = vsnprintf(NULL, 0, fmt, ap)+1; /* +1 for \0 */
 	va_end(ap);
 
 	char *buf = calloc(len, sizeof(char));
