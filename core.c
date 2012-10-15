@@ -13,7 +13,7 @@ static obj
 OBJECT(unsigned short type, size_t varlen)
 {
 	obj o = calloc(1,sizeof(bigobj)+varlen);
-	if (!o) abort("malloc failed");
+	if (!o) abort("malloc failed"); /* LCOV_EXCL_LINE */
 	o->type = type;
 	return o;
 }
@@ -21,8 +21,8 @@ OBJECT(unsigned short type, size_t varlen)
 static char*
 lc(const char *s)
 {
-	char *new = strdup(s);
-	char *p;
+	char *p, *new = strdup(s);
+	if (!new) abort("strdup failed"); /* LCOV_EXCL_LINE */
 	for (p = new; *p; p++) {
 		if (isupper(*p)) *p = tolower(*p);
 	}
