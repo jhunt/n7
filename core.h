@@ -38,6 +38,10 @@
   - code optimizer
   - machine code translation
 
+  FUN STUFF TO ADD
+  - something like Perl's topic var $_
+    or Arc's 'it' pronoun.
+
 ********************************************************/
 
 #include <stdlib.h>
