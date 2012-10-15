@@ -31,6 +31,9 @@ coverage:
 	@echo file://$(PWD)/doc/coverage/index.html
 	@echo
 
+fixme:
+	find . -name '*.[ch]' | xargs grep -in --color FIXME:
+
 repl: repl.o core.o
 syms: syms.o core.o
 
