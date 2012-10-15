@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <stdarg.h>
 
 #include "core.h"
 
@@ -106,6 +107,42 @@ cdr(obj cons)
 	return cons->value.cons.cdr;
 }
 
+obj
+revl(obj lst)
+{
+	/* FIXME: type checking in revl! */
+	obj t, new = NIL;
+	for_list(t, lst) {
+		push(new, car(t));
+	}
+	return new;
+}
+
+obj
+nlist(size_t n, ...)
+{
+	va_list ap;
+	obj lst = NIL;
+	va_start(ap, n);
+
+	for (; n > 0; n--) {
+		/* this line is lcov-excluded b/c va_arg
+		   has weird branching... */
+		push(lst, va_arg(ap, obj)); /* LCOV_EXCL_LINE */
+	}
+
+	va_end(ap);
+	return revl(lst);
+}
+
+obj
+fixnum(long n)
+{
+	obj fixn = OBJECT(OBJ_FIXNUM, 0);
+	fixn->value.fixnum = n;
+	return fixn;
+}
+
 /**  Symbols  ***************************************************/
 
 #define symname(cons) (const char*)untag((car(cons)))
@@ -151,14 +188,122 @@ intern(const char *name)
 	return sym;
 }
 
+/**  Primitive Operators  ***************************************/
+
+/* FIXME: math operations DON'T handle overflow well */
+
+obj
+op_add(obj args)
+{
+	long acc = 0;
+	obj term;
+	for_list(term, args) {
+		/* FIXME: op_add: check types! */
+		acc += car(term)->value.fixnum;
+	}
+	return fixnum(acc);
+}
+
+obj
+op_sub(obj args)
+{
+	long acc = 0;
+	obj term;
+
+	/* FIXME: op_sub: check types! */
+	if (IS_NIL(args)) return fixnum(0);
+	if (IS_NIL(cdr(args))) {
+		acc = 0; /* (- 45) === (- 0 45) */
+	} else {
+		acc = car(args)->value.fixnum;
+		args = cdr(args);
+	}
+
+	for_list(term, args) {
+		acc -= car(term)->value.fixnum;
+	}
+	return fixnum(acc);
+}
+
+obj
+op_mult(obj args)
+{
+	long acc = 1;
+	obj term;
+	for_list(term, args) {
+		acc *= car(term)->value.fixnum;
+	}
+	return fixnum(acc);
+}
+
+obj
+op_div(obj args)
+{
+	long acc;
+	obj term;
+
+	/* FIXME: op_div: check types and arity (i.e. (/) -> ABORT) */
+	if (IS_NIL(args)) abort("/: wrong number of arguments");
+	if (IS_NIL(cdr(args))) {
+		acc = 1; /* (/ 4) == 1/4 */
+		abort("/: no ratio support; ergo, no (/ x) support -- go bug jrh");
+	} else {
+		acc = car(args)->value.fixnum;
+		args = cdr(args);
+	}
+
+	for_list(term, args) {
+		acc /= car(term)->value.fixnum;
+	}
+	return fixnum(acc);
+}
+
 /**  Debugging Functions  ***************************************/
 
 /* LCOV_EXCL_START */
-void
-dump_obj(obj o)
+
+static const char *DUMPER_TYPE_NAMES[] = {
+	"UNKNOWN",
+	"symbol",
+	"cons",
+	"fixnum",
+	"builtin-op"
+};
+
+static void
+_dump(FILE* io, unsigned int indent, obj var)
 {
-	fprintf(stderr, "obj:[%#08lx:%#01lx]\n",
-			hitag(o), lotag(o));
+	unsigned int i;
+	for (i = 0; i < indent; i++) { fprintf(stderr, " "); }
+
+	if (IS_T(var)) {
+		fprintf(io, "T");
+	} else if (IS_NIL(var)) {
+		fprintf(io, "NIL");
+	} else {
+		/* <# [TYPE] [PTR] [VALUE] #> */
+		fprintf(io, "<# %s %p", DUMPER_TYPE_NAMES[var->type], var);
+		if (IS_CONS(var)) {
+			fprintf(io, " (\n");
+			_dump(io, indent+2, car(var));
+			fprintf(io, "\n");
+			_dump(io, indent+2, cdr(var));
+			fprintf(io, " )");
+		} else if (IS_SYM(var)) {
+			fprintf(io, " '%s", var->value.sym.name);
+		} else if (IS_FIXNUM(var)) {
+			fprintf(io, " %lu", var->value.fixnum);
+		}
+		fprintf(io, " #>");
+	}
+}
+
+void
+dump_obj(const char *tag, obj o)
+{
+	fprintf(stderr, "%s", tag);
+	_dump(stderr, 0, o);
+	fprintf(stderr, "\n");
 }
 
 void
@@ -177,7 +322,7 @@ dump_syms(void)
 		if (!IS_NIL(SYMBOL_TABLE[i])) {
 			fprintf(stderr, "SYMBOL_TABLE[%lu] = \n", (unsigned long)i);
 			for_list(rest, SYMBOL_TABLE[i]) {
-				dump_obj(car(rest));
+				dump_obj("", car(rest));
 				dump_sym(car(rest));
 			}
 		}

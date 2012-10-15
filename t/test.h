@@ -58,6 +58,7 @@ inline void
 bail(const char *msg)
 {
 	fprintf(stdout, "bail out! %s\n", msg);
+	diag("bailing out for reasons known only to me");
 	exit(1);
 }
 
@@ -67,6 +68,7 @@ ok(int expr, const char *msg)
 	if (expr) {
 		pass(msg);
 	} else {
+		fprintf(stdout, "#\n# assertion(%s) failed.\n#\n", msg);
 		fail(msg);
 	}
 }

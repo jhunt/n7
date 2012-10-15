@@ -11,18 +11,25 @@
 #define TAG_FIXNUM    0x1   /* 0001 */
 #define TAG_CONSTANT  0x3   /* 0011 */
 
-#define OBJ_SYMBOL       0x01
-#define OBJ_CONS         0x02
-#define OBJ_FIXNUM       0x03
-
 #define hitag(obj) ((unsigned long)(obj)&~TAGGED_MASK)
 #define lotag(obj) ((unsigned long)(obj)& TAGGED_MASK)
 
+#define OBJ_SYMBOL       0x01
+#define OBJ_CONS         0x02
+#define OBJ_FIXNUM       0x03
+#define OBJ_BUILTIN      0x04
+
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
+
+typedef obj (*op_fn)(obj);
+
 struct big_object {
 	unsigned short type;
 	union {
+		long fixnum;
+		op_fn builtin;
+
 		struct {
 			size_t len;
 			char name[];
@@ -32,11 +39,14 @@ struct big_object {
 			obj car;
 			obj cdr;
 		} cons;
+
 	} value;
 };
 
 #define IS_A(obj,tag) ((obj)->type == OBJ_ ## tag)
 #define IS_CONS(obj) IS_A(obj,CONS)
+#define IS_SYM(obj)  IS_A(obj,SYMBOL)
+#define IS_FIXNUM(obj) IS_A(obj,FIXNUM)
 
 #define MAKE_CONSTANT(n) (struct big_object*)((n<<TAGGED_BITS)|TAG_CONSTANT)
 #define NIL MAKE_CONSTANT(0)
@@ -61,21 +71,25 @@ unsigned int hash(const char *str, unsigned int lim);
 obj cons(obj car, obj cdr);
 obj car(obj cons);
 obj cdr(obj cons);
+obj revl(obj lst);
+obj nlist(size_t n, ...);
 #define push(ls,v) (ls) = cons((v),(ls))
 #define for_list(obj, list) \
 	for (obj = (list); !IS_NIL(obj); obj = cdr(obj))
 
+obj fixnum(long n);
+
 /* symbol manipulation */
 obj intern(const char *name);
 
-#if 0
-/* fixed-sized numbers */
-#define mkfixnum(n) ((n) << TAGMASK)   /* implementation detail: */
-#define fixnum(v)   ((v) >> TAGMASK)   /*   fixnum tag is 0x0    */
-#endif
+/* primitive ops */
+obj op_add(obj args);
+obj op_sub(obj args);
+obj op_mult(obj args);
+obj op_div(obj args);
 
 /* debugging; it happens to the best of us */
-void dump_obj(obj o);
+void dump_obj(const char *tag, obj o);
 void dump_sym(obj sym);
 void dump_syms(void);
 

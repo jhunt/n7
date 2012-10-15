@@ -33,7 +33,7 @@ sym_is(const char *a, const char *b, const char *msg)
 
 	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);     diag(s); free(s);
+	s = str("  Failed test '%s'\n", msg);      diag(s); free(s);
 	s = str("       got: %s @ %p\n", b, sym2); diag(s); free(s);
 	s = str("  expected: %s @ %p\n", a, sym1); diag(s); free(s);
 }

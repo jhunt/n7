@@ -1,6 +1,7 @@
 #include "assert.h"
 
-static inline void test_car_cdr(void)
+static inline void
+test_car_cdr(void)
 {
 	WITH_ABORT_PROTECTION {
 		obj a = intern("a");
@@ -15,7 +16,8 @@ static inline void test_car_cdr(void)
 	}
 }
 
-static inline void test_abort(void)
+static inline void
+test_abort(void)
 {
 	jmp_buf comeback;
 	obj sym = intern("SYM");
@@ -65,12 +67,36 @@ static inline void test_abort(void)
 	}
 }
 
+static inline void
+test_nlist_helpers(void)
+{
+	WITH_ABORT_PROTECTION {
+		obj a = intern("a");
+		obj b = intern("b");
+		obj c = intern("c");
+
+		obj l = nlist(3, a, b, c);
+		ok(IS_CONS(l), "nlist returns a cons object");
+		ok(car(l)                == a, "l[0] == a");
+		ok(car(cdr(l))           == b, "l[1] == b");
+		ok(car(cdr(cdr(l)))      == c, "l[2] == c");
+		ok(IS_NIL(cdr(cdr(cdr(l)))), "l[3] is NIL");
+
+		l = revl(l);
+		ok(car(l)                == c, "l[0] == b (revl)");
+		ok(car(cdr(l))           == b, "l[1] == b (revl)");
+		ok(car(cdr(cdr(l)))      == a, "l[2] == a (revl)");
+		ok(IS_NIL(cdr(cdr(cdr(l)))), "l[3] is NIL");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	INIT();
 
 	test_car_cdr();
 	test_abort();
+	test_nlist_helpers();
 
 	done_testing();
 	return 0;
