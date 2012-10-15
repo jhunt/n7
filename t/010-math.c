@@ -1,20 +1,5 @@
 #include "assert.h"
 
-static void
-fixnum_is(obj got, long expect, const char *msg)
-{
-	if (got->value.fixnum == expect) {
-		pass(msg);
-		return;
-	}
-
-	char *s;
-	fail(msg);
-	s = str("  Failed test '%s'\n", msg);            diag(s); free(s);
-	s = str("       got: %li\n", got->value.fixnum); diag(s); free(s);
-	s = str("  expected: %li\n", expect);            diag(s); free(s);
-}
-
 #define N(n) fixnum(n)
 
 int main(int argc, char **argv)

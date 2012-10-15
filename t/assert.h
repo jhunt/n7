@@ -16,4 +16,7 @@ char* str(const char *fmt, ...);
 void sym_is(const char *a, const char *b, const char *msg);
 void sym_isnt(const char *a, const char *b, const char *msg);
 
+void fixnum_is(obj got, long expect, const char *msg);
+void fixnum_isnt(obj got, long expect, const char *msg);
+
 #endif

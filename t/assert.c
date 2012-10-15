@@ -56,3 +56,33 @@ sym_isnt(const char *a, const char *b, const char *msg)
 	   diag("  expected: <anything else>");
 }
 
+void
+fixnum_is(obj got, long expect, const char *msg)
+{
+	if (got->value.fixnum == expect) {
+		pass(msg);
+		return;
+	}
+
+	char *s;
+	fail(msg);
+	s = str("  Failed test '%s'\n", msg);            diag(s); free(s);
+	s = str("       got: %li\n", got->value.fixnum); diag(s); free(s);
+	s = str("  expected: %li\n", expect);            diag(s); free(s);
+}
+
+void
+fixnum_isnt(obj got, long expect, const char *msg)
+{
+	if (got->value.fixnum != expect) {
+		pass(msg);
+		return;
+	}
+
+	char *s;
+	fail(msg);
+	s = str("  Failed test '%s'\n", msg);            diag(s); free(s);
+	s = str("       got: %li\n", got->value.fixnum); diag(s); free(s);
+	   diag("  expected: <anything else>");
+}
+
