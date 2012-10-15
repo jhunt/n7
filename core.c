@@ -40,12 +40,11 @@ obj SYMBOL_TABLE[SYMBOL_TABLE_SIZE];
 void
 _abort(const char *file, unsigned int line, const char *msg)
 {
-	fprintf(stderr, "ABORT @%s:%u: %s\n", file, line, msg);
-
 	/* LCOV_EXCL_START */
 	if (ABORT_JMP) {
 		longjmp(*ABORT_JMP, 42);
 	} else {
+		fprintf(stderr, "ABORT @%s:%u: %s\n", file, line, msg);
 		fprintf(stderr, "So long, and thanks for all the fish!\n");
 		exit(42);
 	}
