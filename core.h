@@ -16,6 +16,7 @@
   LISP ESSENTIALS
   - equal (need print rep)
   - princ / (dump x) or (od x)
+  - io stream support (std*, file, string, etc.)
   - support lambda
   - full reader
   - funcall stack
@@ -23,7 +24,7 @@
 
   DATA TYPES
   - vectors
-  - strings
+  - strings ****
   - complex numbers
   - floating point numbers
   - ratios
