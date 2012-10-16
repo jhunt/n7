@@ -14,9 +14,10 @@
   TODO:
 
   LISP ESSENTIALS
-  - support lambda *** NEXT
+  - eq *** NEXT (started with tests)
+  - support lambda
   - full reader
-  - funcall stack *** NEXT
+  - funcall stack
   - map out core operators
 
   DATA TYPES
