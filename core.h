@@ -64,6 +64,7 @@
 #define OBJ_CONS         0x02
 #define OBJ_FIXNUM       0x03
 #define OBJ_BUILTIN      0x04
+#define OBJ_STRING       0x05
 
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
@@ -86,6 +87,11 @@ struct big_object {
 			obj cdr;
 		} cons;
 
+		struct {
+			size_t len;
+			char *data;
+		}  string;
+
 	} value;
 };
 
@@ -97,6 +103,7 @@ struct big_object {
 #define IS_SYMBOL(x)     IS_A(x, SYMBOL)
 #define IS_FIXNUM(x)     IS_A(x, FIXNUM)
 #define IS_BUILTIN(x)    IS_A(x, BUILTIN)
+#define IS_STRING(x)     IS_A(x, STRING)
 
 #define MAKE_CONSTANT(n) (obj)((n<<TAGGED_BITS)|TAG_CONSTANT)
 #define NIL            MAKE_CONSTANT(0)
@@ -150,6 +157,11 @@ obj intern(const char *name);
 
 /* evaluation */
 obj eval(obj args);
+
+/* string */
+obj vstring(const char *s);
+obj vextend(obj s, const char *cstr, size_t n);
+obj vstrcat(obj root, obj add);
 
 /* primitive ops */
 obj op_add(obj args);

@@ -84,3 +84,38 @@ fixnum_isnt(obj got, long expect, const char *msg)
 	     diag("  expected: <anything else>");
 }
 
+void
+vstring_is(obj got, const char *expect, const char *msg)
+{
+	if (!IS_STRING(got)) {
+		fail(msg);
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("       got: a non-string"));
+		return;
+	}
+
+	if (strcmp(got->value.string.data, expect) == 0) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: '%s'", got->value.string.data));
+	vdiag(str("  expected: '%s'", expect));
+}
+
+void
+vstring_isnt(obj got, const char *expect, const char *msg)
+{
+	if (strcmp(got->value.string.data, expect) != 0) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: '%s'", got->value.string.data));
+	     diag("  expected: anything else...");
+}
+

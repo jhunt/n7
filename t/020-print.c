@@ -39,24 +39,29 @@ print_ok(obj x, const char *expect, const char *msg)
 static void
 test_print(void)
 {
-	print_ok(T, "t", "T prints ok");
-	print_ok(NIL, "nil", "NIL prints ok");
-	print_ok(fixnum(42), "42", "fixnum prints ok");
+	WITH_ABORT_PROTECTION {
+		print_ok(T, "t", "T prints ok");
+		print_ok(NIL, "nil", "NIL prints ok");
+		print_ok(fixnum(42), "42", "fixnum prints ok");
 
-	obj X = intern("X");
-	obj Y = intern("Y");
-	print_ok(cons(X,Y),   "(x . y)", "CONS prints ok");
-	print_ok(cons(X,NIL), "(x)", "list prints ok");
-	print_ok(cons(X,cons(Y,NIL)), "(x y)", "list of 2 prints ok");
-	print_ok(cons(X,cons(Y,cons(X,NIL))), "(x y x)", "list of 3 prints ok");
+		obj X = intern("X");
+		obj Y = intern("Y");
+		print_ok(cons(X,Y),   "(x . y)", "CONS prints ok");
+		print_ok(cons(X,NIL), "(x)", "list prints ok");
+		print_ok(cons(X,cons(Y,NIL)), "(x y)", "list of 2 prints ok");
+		print_ok(cons(X,cons(Y,cons(X,NIL))), "(x y x)", "list of 3 prints ok");
 
-	obj A = intern("A");
-	obj B = intern("B");
-	obj tree = cons(
-		cons(A, B),
-		cons(X, Y));
-	/* odd, but correct... */
-	print_ok(tree, "((a . b) x . y)", "simple tree prints ok");
+		obj str = vstring("kill troll with axe");
+		print_ok(str, "\"kill troll with axe\"", "string prints ok");
+
+		obj A = intern("A");
+		obj B = intern("B");
+		obj tree = cons(
+			cons(A, B),
+			cons(X, Y));
+		/* odd, but correct... */
+		print_ok(tree, "((a . b) x . y)", "simple tree prints ok");
+	}
 }
 
 int main(int argc, char **argv)

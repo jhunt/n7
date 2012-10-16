@@ -12,6 +12,7 @@ test_isa_type(void)
 		ok(!IS_SYMBOL(x),   "T is not a symbol");
 		ok(!IS_FIXNUM(x),   "T is not a fixnum");
 		ok(!IS_BUILTIN(x),  "T is not a builtin");
+		ok(!IS_STRING(x),   "T is not a string");
 
 		x = NIL;
 		ok( IS_SPECIAL(x),  "NIL is special");
@@ -19,6 +20,7 @@ test_isa_type(void)
 		ok(!IS_SYMBOL(x),   "NIL is not a symbol");
 		ok(!IS_FIXNUM(x),   "NIL is not a fixnum");
 		ok(!IS_BUILTIN(x),  "NIL is not a builtin");
+		ok(!IS_STRING(x),   "NIL is not a string");
 
 		x = cons(T, NIL);
 		ok(!IS_SPECIAL(x),  "(T . NIL) is not special");
@@ -26,6 +28,7 @@ test_isa_type(void)
 		ok(!IS_SYMBOL(x),   "(T . NIL) is not a symbol");
 		ok(!IS_FIXNUM(x),   "(T . NIL) is not a fixnum");
 		ok(!IS_BUILTIN(x),  "(T . NIL) is not a builtin");
+		ok(!IS_STRING(x),   "(T . NIL) is not a string");
 
 		x = fixnum(13);
 		ok(!IS_SPECIAL(x),  "13 is not special");
@@ -33,6 +36,7 @@ test_isa_type(void)
 		ok(!IS_SYMBOL(x),   "13 is not a symbol");
 		ok( IS_FIXNUM(x),   "13 is a fixnum");
 		ok(!IS_BUILTIN(x),  "13 is not a builtin");
+		ok(!IS_STRING(x),   "13 is not a string");
 
 		x = intern("A");
 		ok(!IS_SPECIAL(x),  "'A is not special");
@@ -40,6 +44,15 @@ test_isa_type(void)
 		ok( IS_SYMBOL(x),   "'A is a symbol");
 		ok(!IS_FIXNUM(x),   "'A is not a fixnum");
 		ok(!IS_BUILTIN(x),  "'A is not a builtin");
+		ok(!IS_STRING(x),   "'A is not a string");
+
+		x = vstring("string");
+		ok(!IS_SPECIAL(x),  "\"string\" is not special");
+		ok(!IS_CONS(x),     "\"string\" is not a cons");
+		ok(!IS_SYMBOL(x),   "\"string\" is a symbol");
+		ok(!IS_FIXNUM(x),   "\"string\" is not a fixnum");
+		ok(!IS_BUILTIN(x),  "\"string\" is not a builtin");
+		ok( IS_STRING(x),   "\"string\" is not a string");
 	}
 }
 
@@ -73,6 +86,10 @@ test_equality(void)
 		obj c1 = cons(A, B);
 		obj c2 = cons(A, B);
 
+		obj s1  = vstring("s1");
+		obj s1x = vstring("s1"); /* different pointer... */
+		obj s2  = vstring("s2");
+
 		struct {
 			obj a; const char *name_a;
 			obj b; const char *name_b;
@@ -91,8 +108,13 @@ test_equality(void)
 			{ n3,  "3",       n3x, "3'",       0, 1, 1 },
 			{ n3,  "3",       n4,  "4",        0, 0, 0 },
 			/* cons equality */
-			{ c1,  "(A . B)", c1, "(A . B)",   1, 1, 1 },
-			{ c1,  "(A . B)", c2, "(A . B)'",  0, 1, 1 },
+			{ c1,  "(A . B)", c1,  "(A . B)",  1, 1, 1 },
+			{ c1,  "(A . B)", c2,  "(A . B)'", 0, 1, 1 },
+
+			/* string equality */
+			{ s1,  "\"s1\"",  s1,  "\"s1\"",   1, 1, 1 },
+			{ s1,  "\"s1\"",  s1x, "\"s1\"'",  0, 1, 1 },
+			{ s1,  "\"s1\"",  s2,  "\"s2\"",   0, 0, 0 },
 
 			{ 0, 0, 0, 0, 0, 0, 0 }
 		};
@@ -138,6 +160,7 @@ test_type_inequality(void)
 			{ intern("sym"), "'sym"    },
 			{ fixnum(42),    "42"      },
 			{ cons(A, B),    "(A . B)" },
+			{ vstring("str"), "string" },
 			{ 0, 0 }
 		};
 

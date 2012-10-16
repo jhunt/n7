@@ -14,9 +14,9 @@ string_is(const char *got, const char *expect, const char *msg)
 
 	char *s;
 	fail(msg);
-	vdiag(str("  Failed test '%s'\n", msg));
-	vdiag(str("       got: '%s'\n", got));
-	vdiag(str("  expected: '%s'\n", expect));
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: '%s'", got));
+	vdiag(str("  expected: '%s'", expect));
 }
 
 static int
@@ -234,6 +234,7 @@ test_reader_lists(void)
 		obj z = intern("z");
 
 		obj lst, expect;
+		obj str;
 
 		lst = read_from("t/read/list/empty");
 		ok(IS_NIL(lst), "() == nil");
@@ -269,6 +270,9 @@ test_reader_lists(void)
 		expect = cons(x, cons(y, z));
 		lst = read_from("t/read/list/dot-short");
 		list_is(lst, expect, "read (x . (y . z))");
+
+		str = read_from("t/read/string");
+		vstring_is(str, "test string", "read \"test string\"");
 	}
 }
 
