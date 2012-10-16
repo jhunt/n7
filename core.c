@@ -78,6 +78,31 @@ hash(const char *str, unsigned int lim)
 obj
 eq(obj a, obj b)
 {
+	if (a == b) return T;
+	return NIL;
+}
+
+obj
+eql(obj a, obj b)
+{
+	if (IS_T(eq(a,b))) return T;
+
+	if (IS_FIXNUM(a) && IS_FIXNUM(b) &&
+			a->value.fixnum == b->value.fixnum)
+		return T;
+
+	if (IS_CONS(a) && IS_CONS(b) &&
+			eql(car(a), car(b)) &&
+			eql(cdr(a), cdr(b)))
+		return T;
+
+	return NIL;
+}
+
+obj
+equal(obj a, obj b)
+{
+	if (IS_T(eql(a,b))) return T;
 	return NIL;
 }
 

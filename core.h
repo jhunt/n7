@@ -115,7 +115,14 @@ void INIT(void);
 
 unsigned int hash(const char *str, unsigned int lim);
 
+#if 0
+obj same(obj a, obj b);
+obj is(obj a, obj b);
 obj eq(obj a, obj b);
+#endif
+obj eq(obj a, obj b);
+obj eql(obj a, obj b);
+obj equal(obj a, obj b);
 
 /* read... */
 obj readx(FILE *io);
