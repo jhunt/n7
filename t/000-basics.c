@@ -1,13 +1,46 @@
 #include "assert.h"
 
-static void is_eq(obj a, obj b, const char *msg)
+static void
+test_isa_type(void)
 {
-	ok(IS_T(eq(a, b)), msg);
-}
+	WITH_ABORT_PROTECTION {
+		obj x;
 
-static void isnt_eq(obj a, obj b, const char *msg)
-{
-	ok(IS_NIL(eq(a, b)), msg);
+		x = T;
+		ok( IS_SPECIAL(x),  "T is special");
+		ok(!IS_CONS(x),     "T is not a cons");
+		ok(!IS_SYMBOL(x),   "T is not a symbol");
+		ok(!IS_FIXNUM(x),   "T is not a fixnum");
+		ok(!IS_BUILTIN(x),  "T is not a builtin");
+
+		x = NIL;
+		ok( IS_SPECIAL(x),  "NIL is special");
+		ok(!IS_CONS(x),     "NIL is not a cons");
+		ok(!IS_SYMBOL(x),   "NIL is not a symbol");
+		ok(!IS_FIXNUM(x),   "NIL is not a fixnum");
+		ok(!IS_BUILTIN(x),  "NIL is not a builtin");
+
+		x = cons(T, NIL);
+		ok(!IS_SPECIAL(x),  "(T . NIL) is not special");
+		ok( IS_CONS(x),     "(T . NIL) is a cons");
+		ok(!IS_SYMBOL(x),   "(T . NIL) is not a symbol");
+		ok(!IS_FIXNUM(x),   "(T . NIL) is not a fixnum");
+		ok(!IS_BUILTIN(x),  "(T . NIL) is not a builtin");
+
+		x = fixnum(13);
+		ok(!IS_SPECIAL(x),  "13 is not special");
+		ok(!IS_CONS(x),     "13 is not a cons");
+		ok(!IS_SYMBOL(x),   "13 is not a symbol");
+		ok( IS_FIXNUM(x),   "13 is a fixnum");
+		ok(!IS_BUILTIN(x),  "13 is not a builtin");
+
+		x = intern("A");
+		ok(!IS_SPECIAL(x),  "'A is not special");
+		ok(!IS_CONS(x),     "'A is not a cons");
+		ok( IS_SYMBOL(x),   "'A is a symbol");
+		ok(!IS_FIXNUM(x),   "'A is not a fixnum");
+		ok(!IS_BUILTIN(x),  "'A is not a builtin");
+	}
 }
 
 static void
@@ -126,6 +159,7 @@ int main(int argc, char **argv)
 {
 	INIT();
 
+	test_isa_type();
 	test_hashing();
 	test_equality();
 	test_type_inequality();

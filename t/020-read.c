@@ -196,7 +196,7 @@ test_reader(void)
 		}
 
 		x = read_from("t/read/symbol");
-		if (IS_SYM(x)) {
+		if (IS_SYMBOL(x)) {
 			ok(x == intern("symbolix"), "read 'symbolix from t/read/symbol");
 		} else {
 			diag("failed to read symbol from t/read/symbol");
