@@ -14,52 +14,56 @@ string_is(const char *got, const char *expect, const char *msg)
 
 	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);  diag(s); free(s);
-	s = str("       got: '%s'\n", got);    diag(s); free(s);
-	s = str("  expected: '%s'\n", expect); diag(s); free(s);
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: '%s'\n", got));
+	vdiag(str("  expected: '%s'\n", expect));
 }
 
 static int
 obj_eq(obj got, obj expect, size_t n, const char *msg)
 {
 	char *s;
-	s = str("Failed test '%s'", msg); 
 
 	if ((IS_NIL(got) && IS_NIL(expect)) || IS_T(got) && IS_T(expect)) {
+		pass(msg);
 		return 1;
 	}
 
 	if (!IS_NIL(got) && IS_NIL(expect)) {
-		fail(msg); diag(s); free(s);
-		s = str("  list continued on past index %u", n); diag(s); free(s);
+		fail(msg);
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("  list continued on past index %u", n));
 		return 0;
 	}
 
 	if (IS_NIL(got) && !IS_NIL(expect)) {
-		fail(msg); diag(s); free(s);
-		s = str("  list ended prematurely at index %u", n); diag(s); free(s);
+		fail(msg);
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("  list ended prematurely at index %u", n));
 		return 0;
 	}
 
 	if (!IS_T(got) && IS_T(expect)) {
-		fail(msg); diag(s); free(s);
+		fail(msg);
+		vdiag(str("  Failed test '%s'", msg));
 		/* FIXME: we are expecting something explicit... need princ support */
-		s = str("  item[%u] was: %s", n, "<not t>"); diag(s); free(s);
-		diag("      expected: t");
+		vdiag(str("  item[%u] was: %s", n, "<not t>"));
+		       diag("      expected: t");
 	}
 
 	if (IS_T(got) && !IS_T(expect)) {
-		fail(msg); diag(s); free(s);
-		s = str("  item[%u] was: t", n); diag(s); free(s);
+		fail(msg);
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("  item[%u] was: t", n));
 		/* FIXME: we are expecting something explicit... need princ support */
-		s = str("      expected: %s", "<something else>"); diag(s); free(s);
+		vdiag(str("      expected: %s", "<something else>"));
 		return 0;
 	}
 
 	if (got->type != expect->type) {
 		fail(msg);
-		s = str("Failed test '%s'", msg); diag(s); free(s);
-		s = str("  got[%u] != expect[%u] - type mismatch", n, n); diag(s); free(s);
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("       got[%u] != expect[%u] - type mismatch", n, n));
 		return 0;
 	}
 
@@ -72,9 +76,9 @@ obj_eq(obj got, obj expect, size_t n, const char *msg)
 		case OBJ_SYMBOL:
 			if (got != expect) {
 				fail(msg);
-				diag(s); free(s);
-				s = str("       got: %s @ %p\n", got->value.sym.name, got); diag(s); free(s);
-				s = str("  expected: %s @ %p\n", expect->value.sym.name, got); diag(s); free(s);
+				vdiag(str("  Failed test '%s'", msg));
+				vdiag(str("       got: %s @ %p\n", got->value.sym.name, got));
+				vdiag(str("  expected: %s @ %p\n", expect->value.sym.name, got));
 				return 0;
 			}
 			return 1;
@@ -82,16 +86,16 @@ obj_eq(obj got, obj expect, size_t n, const char *msg)
 		case OBJ_FIXNUM:
 			if (got->value.fixnum != expect->value.fixnum) {
 				fail(msg);
-				diag(s); free(s);
-				s = str("       got: %li", got->value.fixnum); diag(s); free(s);
-				s = str("  expected: %li", expect->value.fixnum); diag(s); free(s);
+				vdiag(str("  Failed test '%s'", msg));
+				vdiag(str("       got: %li", got->value.fixnum));
+				vdiag(str("  expected: %li", expect->value.fixnum));
 				return 0;
 			}
 			return 1;
 
 		default:
 			fail(msg);
-			diag(s); free(s);
+			vdiag(str("  Failed test '%s'", msg));
 			diag("unknown object type...");
 			return 0;
 	}

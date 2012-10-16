@@ -33,11 +33,10 @@ sym_is(const char *a, const char *b, const char *msg)
 		return;
 	}
 
-	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);      diag(s); free(s);
-	s = str("       got: %s @ %p\n", b, sym2); diag(s); free(s);
-	s = str("  expected: %s @ %p\n", a, sym1); diag(s); free(s);
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %s @ %p\n", b, sym2));
+	vdiag(str("  expected: %s @ %p\n", a, sym1));
 }
 
 void
@@ -51,11 +50,10 @@ sym_isnt(const char *a, const char *b, const char *msg)
 		return;
 	}
 
-	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);     diag(s); free(s);
-	s = str("       got: %s @ %p\n", b, sym2); diag(s); free(s);
-	   diag("  expected: <anything else>");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %s @ %p\n", b, sym2));
+	     diag("  expected: <anything else>");
 }
 
 void
@@ -66,11 +64,10 @@ fixnum_is(obj got, long expect, const char *msg)
 		return;
 	}
 
-	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);            diag(s); free(s);
-	s = str("       got: %li\n", got->value.fixnum); diag(s); free(s);
-	s = str("  expected: %li\n", expect);            diag(s); free(s);
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %li\n", got->value.fixnum));
+	vdiag(str("  expected: %li\n", expect));
 }
 
 void
@@ -81,10 +78,9 @@ fixnum_isnt(obj got, long expect, const char *msg)
 		return;
 	}
 
-	char *s;
 	fail(msg);
-	s = str("  Failed test '%s'\n", msg);            diag(s); free(s);
-	s = str("       got: %li\n", got->value.fixnum); diag(s); free(s);
-	   diag("  expected: <anything else>");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %li\n", got->value.fixnum));
+	     diag("  expected: <anything else>");
 }
 

@@ -36,6 +36,12 @@ diag(const char *msg)
 {
 	fprintf(stdout, "# %s\n", msg);
 }
+inline void
+vdiag(char *vstr)
+{
+	diag(vstr);
+	free(vstr);
+}
 
 inline void
 pass(const char *msg)
