@@ -132,6 +132,9 @@ obj fixnum(long n);
 /* symbol manipulation */
 obj intern(const char *name);
 
+/* evaluation */
+obj eval(obj args);
+
 /* primitive ops */
 obj op_add(obj args);
 obj op_sub(obj args);

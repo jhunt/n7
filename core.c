@@ -344,6 +344,18 @@ intern(const char *name)
 	return sym;
 }
 
+/**  Evaluation  ************************************************/
+
+obj
+eval(obj args)
+{
+	if (IS_NIL(args)) return NIL;
+	if (IS_T(args)) return T;
+	if (IS_FIXNUM(args)) return args;
+
+	abort("eval not finished");
+}
+
 /**  Primitive Operators  ***************************************/
 
 /* FIXME: math operations DON'T handle overflow well */
