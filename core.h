@@ -115,6 +115,8 @@ void INIT(void);
 
 unsigned int hash(const char *str, unsigned int lim);
 
+obj eq(obj a, obj b);
+
 /* read... */
 obj readx(FILE *io);
 

@@ -75,6 +75,12 @@ hash(const char *str, unsigned int lim)
 	return *str % lim;
 }
 
+obj
+eq(obj a, obj b)
+{
+	return NIL;
+}
+
 /**************************************************/
 
 #define TOKEN_MAX 100
