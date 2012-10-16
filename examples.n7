@@ -1,0 +1,23 @@
+; vim:ft=lisp
+
+;
+; These are just examples of n7 forms
+; strictly for (experiment|inspir)ation
+;
+
+(def (call &rest args)
+  (apply args))
+
+(def (++ n)
+  (+ 1 n))
+
+(def (-- n)
+  (- n 1))
+
+(sym? x)
+(nil? x)
+(=? x y)
+
+(print "Hello, World")
+
+(dump '(1 2 3 4))
