@@ -1,0 +1,10 @@
+; tokenizer baseline test; ensures that next_token
+; can split up lisp code into discrete chunks
+
+(a b -42.5
+
+	(
+	   * ; this is multiplication
+	   delta 2))
+
+; vim:ft=lisp

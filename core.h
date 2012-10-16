@@ -95,6 +95,10 @@ struct big_object {
 #define NIL MAKE_CONSTANT(0)
 #define T   MAKE_CONSTANT(1)
 
+/* these are used internally by the parser */
+#define CLOSE_PAREN MAKE_CONSTANT(33)
+#define CONS_DOT    MAKE_CONSTANT(34)
+
 #define IS_T(obj)   ((obj) == T)
 #define IS_NIL(obj) ((obj) == NIL)
 
@@ -111,7 +115,7 @@ void INIT(void);
 unsigned int hash(const char *str, unsigned int lim);
 
 /* read... */
-obj readio(FILE *io);
+obj readx(FILE *io);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);

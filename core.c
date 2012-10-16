@@ -77,84 +77,156 @@ hash(const char *str, unsigned int lim)
 
 /**************************************************/
 
-static obj
-read_expr(FILE *io)
+#define TOKEN_MAX 100
+static struct {
+	unsigned short idx;
+	char buf[TOKEN_MAX];
+} TOKEN = { 0, {0} };
+
+static inline void
+token_put(char c)
 {
-	return NIL;
+	/* FIXME: in token_put, we should expand the buffer if need be */
+	if (TOKEN.idx < TOKEN_MAX - 1) {
+		TOKEN.buf[TOKEN.idx++] = c;
+	}
+}
+static inline char*
+token_val(void)
+{
+	TOKEN.buf[TOKEN.idx++] ='\0';
+	TOKEN.idx = 0;
+	return strdup(TOKEN.buf);
+}
+static inline int
+token_ok(void)
+{
+	return TOKEN.idx > 0;
+}
+
+char*
+next_token(FILE *io)
+{
+	char c;
+next_char:
+	switch (c = fgetc(io)) {
+		case EOF:
+			break;
+
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			if (token_ok()) break;
+			goto next_char;
+
+		case ';': /* Lisp-style comments */
+			for (c = fgetc(io); c != EOF && c != '\n'; c = fgetc(io))
+				;
+			if (token_ok()) break;
+			goto next_char;
+
+		case '(':
+		case ')':
+		case '`':
+		case '\'':
+			if (token_ok()) {
+				ungetc(c, io);
+				break;
+			}
+			token_put(c);
+			break;
+
+		default:
+			token_put(c);
+			goto next_char;
+	}
+
+	if (!token_ok()) return NULL;
+	return token_val();
 }
 
 static obj
-read_number(FILE *io)
+read_number(const char *token)
 {
 	/* FIXME: read_number should support negatives, imaginaries, ratios, decimals, arbitrary base, etc. */
 	long fixn = 0;
-	char d;
-
-	for (d = fgetc(io); d != EOF && isdigit(d); d = fgetc(io)) {
-		fixn = fixn*10 + (d-'0');
+	size_t i, l;
+	for (i = 0, l = strlen(token); i < l; i++) {
+		fixn = fixn*10 + (token[i]-'0');
 	}
 	return fixnum(fixn);
 }
 
 static obj
-read_symbol(FILE *io)
+read_list(FILE *io)
 {
-	char buf[64] = {0};
-	size_t i;
-	char d;
+	size_t nread = 1;
+	obj first, next, rest;
+	first = next = readx(io);
 
-	for (i = 0, d = fgetc(io); d != EOF && !isspace(d); d = fgetc(io), i++) {
-		/* FIXME: symbol names limited to 64 chars... */
-		if (i < 63) buf[i] = d;
+	if (next == CLOSE_PAREN) return NIL;
+	if (next == CONS_DOT) abort("invalid form starting with (.");
+
+	obj lst = NIL;
+	for (; next != CLOSE_PAREN; next = readx(io)) {
+		if (next == CONS_DOT) {
+			if (nread == 1) {
+				rest = readx(io);
+				if (readx(io) == CLOSE_PAREN)
+					return cons(first, rest);
+			}
+			abort("abuse of dotted notation!");
+		}
+
+		push(lst, next);
 	}
 
-	return intern(buf);
+	return revl(lst);
 }
 
 obj
-readio(FILE *io)
+readx(FILE *io)
 {
-	char c;
-reread:
-	switch (c = fgetc(io)) {
-	case EOF:
-		return NIL;
+	char *token;
+	obj val;
 
-	case ';':
-		/* skip comments */
-		for (c = fgetc(io); c != EOF && c != '\n'; c = fgetc(io))
-			;
-		goto reread;
+	token = next_token(io);
+	if (!token) return NIL; /* EOF */
 
-	case ' ':
-	case '\t':
-	case '\r':
-	case '\n':
-		goto reread;
+	switch (*token) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			val = read_number(token);
+			break;
 
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		ungetc(c, io);
-		return read_number(io);
+		case '(':
+			val = read_list(io);
+			break;
 
-	case '(':
-		return read_expr(io);
+		case ')':
+			val = CLOSE_PAREN;
+			break;
 
-	case ')':
-		abort("unexpected ')' in input stream");
+		case '.':
+			val = CONS_DOT;
+			break;
 
-	default:
-		ungetc(c, io);
-		return read_symbol(io);
+		default:
+			val = intern(token);
+			break;
 	}
+
+	free(token);
+	return val;
 }
 
 /**************************************************/
