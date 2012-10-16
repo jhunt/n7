@@ -1,0 +1,69 @@
+(f x (g 1 (h 34 2 5)) y)
+
+;
+; functions should be lexically scoped, with closures
+;
+
+(define (foo f)
+  (with (m 1
+         n 2)
+    ((f m n))))
+
+(set m 99)
+(foo +)
+# -> 3
+# -> (+ 1 2), using m and n from the (with ...) block
+
+
+
+ALSO, with is a macro.
+
+(macro (with defs &rest body)
+  `((fn ,(map car defs)
+    (do ,@body)) ,(map cdr defs)))
+
+; Interesting twist on macro definitions;
+; the [...] sections are executed at compile-time
+; and behave like (...).  Literal (...) are substituted
+; as part of macro-expansion.  With proper editor
+; support for syntax highlighting, this can be quite
+; interesting, highlighting specifically the areas
+; that run when.
+;
+; [[...]] behaves like ,@...; splice the list contents
+; in-place.
+;
+(macro (with defs &rest body)
+  ((fn [map car defs]
+    (do [[body]]) [map cdr defs])))
+
+(with ((x 1) (y 2))
+  (f x)
+  (f y)
+  (+ x y))
+
+# expands to ->
+
+((fn (x y)
+  (do
+    (f x)
+    (f y)
+    (+ x y))) (1 2))
+
+
+
+
+That wraps an anon lambda around the do block, and then calls
+it with the appropriate values.  This is a lot like CL (let ...)
+(but not (let* ...))
+
+DO has to be a special form that evaluates every item in the
+list given it, and then returns the last value as its expr-val
+
+(do 1 2 3 4)
+# -> 4
+
+
+
+
+# vim:ft=lisp
