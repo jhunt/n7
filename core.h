@@ -14,7 +14,8 @@
   TODO:
 
   LISP ESSENTIALS
-  - eq *** NEXT (started with tests)
+  - equal (need print rep)
+  - princ / (dump x) or (od x)
   - support lambda
   - full reader
   - funcall stack
@@ -129,6 +130,7 @@ obj equal(obj a, obj b);
 
 /* read... */
 obj readx(FILE *io);
+obj printx(FILE *io, obj what);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);

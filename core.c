@@ -82,19 +82,23 @@ eq(obj a, obj b)
 	return NIL;
 }
 
+#define TVAL(test) ((test) ? T : NIL)
+
 obj
 eql(obj a, obj b)
 {
 	if (IS_T(eq(a,b))) return T;
+	if (TYPE(a) != TYPE(b)) return NIL;
 
-	if (IS_FIXNUM(a) && IS_FIXNUM(b) &&
-			a->value.fixnum == b->value.fixnum)
-		return T;
+	switch (TYPE(a)) {
+		case OBJ_FIXNUM:
+			return TVAL(a->value.fixnum == b->value.fixnum);
 
-	if (IS_CONS(a) && IS_CONS(b) &&
-			eql(car(a), car(b)) &&
-			eql(cdr(a), cdr(b)))
-		return T;
+		case OBJ_CONS:
+			return TVAL(
+				eql(car(a), car(b)) &&
+				eql(cdr(a), cdr(b)));
+	}
 
 	return NIL;
 }
@@ -258,6 +262,53 @@ readx(FILE *io)
 
 	free(token);
 	return val;
+}
+
+static void
+print_list(FILE *io, obj rest)
+{
+	printx(io, car(rest));
+	if (!IS_NIL(cdr(rest))) {
+		fprintf(io, " ");
+		if (IS_CONS(cdr(rest))) {
+			print_list(io, cdr(rest));
+		} else {
+			fprintf(io, ". ");
+			printx(io, cdr(rest));
+			fprintf(io, ")");
+		}
+	} else {
+		fprintf(io, ")");
+	}
+}
+
+obj
+printx(FILE *io, obj what)
+{
+	if (IS_T(what)) {
+		fprintf(io, "t");
+	} else if (IS_NIL(what)) {
+		fprintf(io, "nil");
+	} else {
+		switch (TYPE(what)) {
+			case OBJ_FIXNUM:
+				fprintf(io, "%li", what->value.fixnum);
+				break;
+
+			case OBJ_CONS:
+				fprintf(io, "(");
+				print_list(io, what);
+				break;
+
+			case OBJ_SYMBOL:
+				fprintf(io, "%s", what->value.sym.name);
+				break;
+
+			default:
+				abort("unprintable object!");
+		}
+	}
+	return T;
 }
 
 /**************************************************/
@@ -496,7 +547,7 @@ _dump(FILE* io, unsigned int indent, obj var)
 			fprintf(io, "\n");
 			_dump(io, indent+2, cdr(var));
 			fprintf(io, " )");
-		} else if (IS_SYM(var)) {
+		} else if (IS_SYMBOL(var)) {
 			fprintf(io, " '%s", var->value.sym.name);
 		} else if (IS_FIXNUM(var)) {
 			fprintf(io, " %lu", var->value.fixnum);
