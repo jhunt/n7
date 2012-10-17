@@ -92,8 +92,8 @@ eql(obj a, obj b)
 		return T;
 
 	if (IS_CONS(a) && IS_CONS(b) &&
-			eql(car(a), car(b)) &&
-			eql(cdr(a), cdr(b)))
+			IS_T(eql(car(a), car(b))) &&
+			IS_T(eql(cdr(a), cdr(b))))
 		return T;
 
 	return NIL;

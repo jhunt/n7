@@ -60,6 +60,9 @@ test_equality(void)
 			/* cons equality */
 			{ c1,  "(A . B)", c1, "(A . B)",   1, 1, 1 },
 			{ c1,  "(A . B)", c2, "(A . B)'",  0, 1, 1 },
+			/* cons inequality special cases */
+			{ cons(A,B), "(A . B)", cons(A, A), "(A . A)", 0, 0, 0 },
+			{ cons(A,B), "(A . B)", cons(B, B), "(B . B)", 0, 0, 0 },
 
 			{ 0, 0, 0, 0, 0, 0, 0 }
 		};
@@ -112,11 +115,18 @@ test_type_inequality(void)
 		size_t i, j;
 		for (i = 0; zoo[i].value; i++) {
 			for (j = i+1; zoo[j].value; j++) {
-				msg = str("(eq %s %s) should be NIL (cross-type)",
+				msg = str("(eql %s %s) should be NIL (cross-type)",
 						zoo[i].name,
 						zoo[j].name);
-				ok(IS_NIL(eq(zoo[i].value, zoo[j].value)), msg);
+				ok(IS_NIL(eql(zoo[i].value, zoo[j].value)), msg);
 				free(msg);
+
+				msg = str("(eql %s %s) should be NIL (cross-type)",
+						zoo[j].name,
+						zoo[i].name);
+				ok(IS_NIL(eql(zoo[j].value, zoo[i].value)), msg);
+				free(msg);
+
 			}
 		}
 	}
