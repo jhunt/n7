@@ -117,6 +117,38 @@ equal(obj a, obj b)
 
 /**************************************************/
 
+obj
+get(obj env, obj sym)
+{
+	obj x;
+	for_list(x, env) {
+		if (IS_T(eq(car(car(x)), sym))) {
+			return cdr(car(x));
+		}
+	}
+	return UNDEF;
+}
+
+obj
+set(obj env, obj sym, obj val)
+{
+	obj x;
+	for_list(x, env) {
+		if (IS_T(eq(car(car(x)), sym))) {
+			/* FIXME: need setcdr! (and setcar) */
+			car(x)->value.cons.cdr = val;
+			return env;
+		}
+	}
+
+	return cons(
+		cons(sym, val),
+		env
+	);
+}
+
+/**************************************************/
+
 #define TOKEN_MAX 100
 static struct {
 	unsigned short idx;

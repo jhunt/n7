@@ -138,6 +138,10 @@ obj eq(obj a, obj b);
 obj eql(obj a, obj b);
 obj equal(obj a, obj b);
 
+/* environmentalism */
+obj get(obj env, obj sym);
+obj set(obj env, obj sym, obj val);
+
 /* read... */
 obj readx(FILE *io);
 obj printx(FILE *io, obj what);
