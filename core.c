@@ -75,6 +75,24 @@ hash(const char *str, unsigned int lim)
 	return *str % lim;
 }
 
+static obj
+_builtin(op_fn fn)
+{
+	obj op = OBJECT(OBJ_BUILTIN, 0);
+	op->value.builtin = fn;
+	return op;
+}
+
+obj
+globals(void)
+{
+	obj e = NIL;
+	e = set(e, intern("+"), _builtin(op_add));
+	e = set(e, intern("-"), _builtin(op_sub));
+	e = set(e, intern("*"), _builtin(op_mult));
+	e = set(e, intern("/"), _builtin(op_div));
+}
+
 obj
 eq(obj a, obj b)
 {
@@ -511,11 +529,31 @@ intern(const char *name)
 /**  Evaluation  ************************************************/
 
 obj
-eval(obj args)
+eval(obj args, obj env)
 {
+	/* self-evaluating stuff */
 	if (IS_NIL(args)) return NIL;
 	if (IS_T(args)) return T;
 	if (IS_FIXNUM(args)) return args;
+
+	/* symbol lookup */
+	if (IS_SYMBOL(args)) {
+		obj val = get(env, args);
+		return DEF(val) ? val : NIL;
+	}
+
+	if (IS_CONS(args)) {
+		obj fn = get(car(args), env);
+		args = cdr(args);
+
+		/* FIXME: need to handle special forms */
+		obj x;
+		for_list(x, args) {
+			x->value.cons.car = eval(x, env);
+		}
+
+		op_apply(fn, args);
+	}
 
 	abort("eval not finished");
 }
@@ -548,7 +586,7 @@ vextend(obj s, const char *buf, size_t n)
 obj
 vextendc(obj s, char c)
 {
-	char *buf[2] = { c, '\0' };
+	char buf[2] = { c, '\0' };
 	return vextend(s, buf, 1);
 }
 

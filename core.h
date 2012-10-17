@@ -126,6 +126,8 @@ void INIT(void);
 unsigned int hash(const char *str, unsigned int lim);
 int type(obj o);
 
+obj globals(void);
+
 #if 0
 obj same(obj a, obj b);
 obj is(obj a, obj b);
@@ -161,7 +163,7 @@ obj fixnum(long n);
 obj intern(const char *name);
 
 /* evaluation */
-obj eval(obj args);
+obj eval(obj args, obj env);
 
 /* string */
 obj vstring(const char *s);
