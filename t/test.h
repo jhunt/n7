@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 unsigned int FAILED_TESTS = 0;
 unsigned int TOTAL_TESTS  = 0;
@@ -69,14 +70,36 @@ bail(const char *msg)
 	exit(1);
 }
 
+char*
+str(const char *fmt, ...)
+{
+	size_t len;
+
+	va_list ap;
+	va_start(ap, fmt);
+	len = vsnprintf(NULL, 0, fmt, ap)+1; /* +1 for \0 */
+	va_end(ap);
+
+	char *buf = calloc(len, sizeof(char));
+	if (!buf) bail("memory exhausted (string:malloc failed)");
+
+	va_start(ap, fmt);
+	vsnprintf(buf, len, fmt, ap);
+	va_end(ap);
+
+	return buf;
+}
+
 inline void
 ok(int expr, const char *msg)
 {
 	if (expr) {
 		pass(msg);
 	} else {
-		fprintf(stdout, "#\n# assertion(%s) failed.\n#\n", msg);
 		fail(msg);
+	     diag("");
+		vdiag(str("  Failed test '%s'", msg));
+	     diag("");
 	}
 }
 
