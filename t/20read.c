@@ -19,96 +19,6 @@ string_is(const char *got, const char *expect, const char *msg)
 	vdiag(str("  expected: '%s'", expect));
 }
 
-static int
-obj_eq(obj got, obj expect, size_t n, const char *msg)
-{
-	char *s;
-
-	if ((IS_NIL(got) && IS_NIL(expect)) || IS_T(got) && IS_T(expect)) {
-		pass(msg);
-		return 1;
-	}
-
-	if (!IS_NIL(got) && IS_NIL(expect)) {
-		fail(msg);
-		vdiag(str("  Failed test '%s'", msg));
-		vdiag(str("  list continued on past index %u", n));
-		return 0;
-	}
-
-	if (IS_NIL(got) && !IS_NIL(expect)) {
-		fail(msg);
-		vdiag(str("  Failed test '%s'", msg));
-		vdiag(str("  list ended prematurely at index %u", n));
-		return 0;
-	}
-
-	if (!IS_T(got) && IS_T(expect)) {
-		fail(msg);
-		vdiag(str("  Failed test '%s'", msg));
-		/* FIXME: we are expecting something explicit... need princ support */
-		vdiag(str("  item[%u] was: %s", n, "<not t>"));
-		       diag("      expected: t");
-	}
-
-	if (IS_T(got) && !IS_T(expect)) {
-		fail(msg);
-		vdiag(str("  Failed test '%s'", msg));
-		vdiag(str("  item[%u] was: t", n));
-		/* FIXME: we are expecting something explicit... need princ support */
-		vdiag(str("      expected: %s", "<something else>"));
-		return 0;
-	}
-
-	if (got->type != expect->type) {
-		fail(msg);
-		vdiag(str("  Failed test '%s'", msg));
-		vdiag(str("       got[%u] != expect[%u] - type mismatch", n, n));
-		return 0;
-	}
-
-
-	switch (got->type) {
-		case OBJ_CONS:
-			return (obj_eq(car(got), car(expect), n, msg) &&
-			        obj_eq(cdr(got), cdr(expect), n+1, msg));
-
-		case OBJ_SYMBOL:
-			if (got != expect) {
-				fail(msg);
-				vdiag(str("  Failed test '%s'", msg));
-				vdiag(str("       got: %s @ %p\n", got->value.sym.name, got));
-				vdiag(str("  expected: %s @ %p\n", expect->value.sym.name, got));
-				return 0;
-			}
-			return 1;
-
-		case OBJ_FIXNUM:
-			if (got->value.fixnum != expect->value.fixnum) {
-				fail(msg);
-				vdiag(str("  Failed test '%s'", msg));
-				vdiag(str("       got: %li", got->value.fixnum));
-				vdiag(str("  expected: %li", expect->value.fixnum));
-				return 0;
-			}
-			return 1;
-
-		default:
-			fail(msg);
-			vdiag(str("  Failed test '%s'", msg));
-			diag("unknown object type...");
-			return 0;
-	}
-}
-
-static void
-list_is(obj got, obj expect, const char *msg)
-{
-	if (obj_eq(got, expect, 0, msg)) {
-		pass(msg);
-	}
-}
-
 static FILE*
 open_file(const char *path)
 {
@@ -241,35 +151,35 @@ test_reader_lists(void)
 
 		expect = cons(x, NIL);
 		lst = read_from("t/read/list/1");
-		list_is(lst, expect, "read (x)");
+		obj_equal(lst, expect, "read (x)");
 
 		expect = cons(x, cons(y, NIL));
 		lst = read_from("t/read/list/2");
-		list_is(lst, expect, "read (x y)");
+		obj_equal(lst, expect, "read (x y)");
 
 		expect = cons(x, cons(y, cons(z, NIL)));
 		lst = read_from("t/read/list/3");
-		list_is(lst, expect, "read (x y z)");
+		obj_equal(lst, expect, "read (x y z)");
 
 		expect = cons(x, cons( cons(y, NIL), cons(z, NIL)));
 		lst = read_from("t/read/list/sub1");
-		list_is(lst, expect, "read (x (y) z)");
+		obj_equal(lst, expect, "read (x (y) z)");
 
 		expect = cons(x, NIL);
 		lst = read_from("t/read/list/dot1");
-		list_is(lst, expect, "read (x . NIL)");
+		obj_equal(lst, expect, "read (x . NIL)");
 
 		expect = cons(x, y);
 		lst = read_from("t/read/list/dot2");
-		list_is(lst, expect, "read (x . y)");
+		obj_equal(lst, expect, "read (x . y)");
 
 		expect = cons(x, cons(y, cons(z, NIL)));
 		lst = read_from("t/read/list/dot3");
-		list_is(lst, expect, "read (x . (y . (z . NIL)))");
+		obj_equal(lst, expect, "read (x . (y . (z . NIL)))");
 
 		expect = cons(x, cons(y, z));
 		lst = read_from("t/read/list/dot-short");
-		list_is(lst, expect, "read (x . (y . z))");
+		obj_equal(lst, expect, "read (x . (y . z))");
 
 		str = read_from("t/read/string");
 		vstring_is(str, "test string", "read \"test string\"");

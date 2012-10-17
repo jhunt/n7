@@ -122,9 +122,43 @@ obj_equal(obj got, obj exp, const char *msg)
 	}
 
 	fail(msg);
+	     diag("");
 	vdiag(str("  Failed test '%s'", msg));
 	vdiag(str("       got: %s", cdump(got)));
 	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
+}
+
+void
+obj_eql(obj got, obj exp, const char *msg)
+{
+	if (IS_T(eql(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
+}
+
+void
+obj_eq(obj got, obj exp, const char *msg)
+{
+	if (IS_T(eq(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
 }
 
 void
@@ -135,9 +169,11 @@ is_defined(obj x, const char *msg)
 		return;
 	}
 
+	     diag("");
 	vdiag(str("  Failed test '%s'", msg));
 	     diag("       got: <undefined>");
 	     diag("  expected: anything else...");
+	     diag("");
 }
 
 void
@@ -148,8 +184,10 @@ isnt_defined(obj x, const char *msg)
 		return;
 	}
 
+	     diag("");
 	vdiag(str("  Failed test '%s'", msg));
 	vdiag(str("       got: %s", cdump(x)));
-	 diag("  expected: <undefined>");
+	     diag("  expected: <undefined>");
+	     diag("");
 }
 
