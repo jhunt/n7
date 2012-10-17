@@ -78,7 +78,7 @@ hash(const char *str, unsigned int lim)
 obj
 eq(obj a, obj b)
 {
-	if (a == b) return T;
+	if (DEF(a) && DEF(b) && a == b) return T;
 	return NIL;
 }
 

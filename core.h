@@ -111,9 +111,11 @@ struct big_object {
 /* these are used internally by the parser */
 #define CLOSE_PAREN    MAKE_CONSTANT(33)
 #define CONS_DOT       MAKE_CONSTANT(34)
+#define UNDEF          MAKE_CONSTANT(35) /* more nil than NIL */
 
 #define IS_T(x)   ((x) == T)
 #define IS_NIL(x) ((x) == NIL)
+#define DEF(x)    ((x) != UNDEF)
 
 /**************************************************/
 
