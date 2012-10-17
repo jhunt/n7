@@ -14,7 +14,6 @@
   TODO:
 
   LISP ESSENTIALS
-  - equal (need print rep)
   - io stream support (std*, file, string, etc.)
   - support lambda
   - full reader

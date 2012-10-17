@@ -82,27 +82,14 @@ eq(obj a, obj b)
 	return NIL;
 }
 
-#define TVAL(test) ((test) ? T : NIL)
-
 obj
 eql(obj a, obj b)
 {
 	if (IS_T(eq(a,b))) return T;
 	if (TYPE(a) != TYPE(b)) return NIL;
 
-	switch (TYPE(a)) {
-		case OBJ_FIXNUM:
-			return TVAL(a->value.fixnum == b->value.fixnum);
-
-		case OBJ_CONS:
-			return TVAL(
-				IS_T(eql(car(a), car(b))) &&
-				IS_T(eql(cdr(a), cdr(b))));
-
-		case OBJ_STRING:
-			return TVAL(
-				strcmp(a->value.string.data,
-				       b->value.string.data) == 0);
+	if (TYPE(a) == OBJ_FIXNUM) {
+		return a->value.fixnum == b->value.fixnum ? T : NIL;
 	}
 
 	return NIL;
@@ -112,7 +99,13 @@ obj
 equal(obj a, obj b)
 {
 	if (IS_T(eql(a,b))) return T;
-	return NIL;
+	char *rep_a = cdump(a);
+	char *rep_b = cdump(b);
+
+	obj rc = (strcmp(rep_a, rep_b) == 0 ? T : NIL);
+	free(rep_a);
+	free(rep_b);
+	return rc;
 }
 
 /**************************************************/

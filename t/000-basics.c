@@ -120,14 +120,14 @@ test_equality(void)
 			{ n3,  "3",       n4,  "4",        0, 0, 0 },
 			/* cons equality */
 			{ c1,  "(A . B)", c1, "(A . B)",   1, 1, 1 },
-			{ c1,  "(A . B)", c2, "(A . B)'",  0, 1, 1 },
+			{ c1,  "(A . B)", c2, "(A . B)'",  0, 0, 1 }, /* per CL */
 			/* cons inequality special cases */
 			{ cons(A,B), "(A . B)", cons(A, A), "(A . A)", 0, 0, 0 },
 			{ cons(A,B), "(A . B)", cons(B, B), "(B . B)", 0, 0, 0 },
 
 			/* string equality */
 			{ s1,  "\"s1\"",  s1,  "\"s1\"",   1, 1, 1 },
-			{ s1,  "\"s1\"",  s1x, "\"s1\"'",  0, 1, 1 },
+			{ s1,  "\"s1\"",  s1x, "\"s1\"'",  0, 0, 1 }, /* per CL */
 			{ s1,  "\"s1\"",  s2,  "\"s2\"",   0, 0, 0 },
 
 			{ 0, 0, 0, 0, 0, 0, 0 }

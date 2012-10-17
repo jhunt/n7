@@ -18,9 +18,9 @@ test_symbols(void)
 }
 
 static void
-obj_eql(obj got, obj exp, const char *msg)
+obj_equal(obj got, obj exp, const char *msg)
 {
-	if (IS_T(eql(got, exp))) {
+	if (IS_T(equal(got, exp))) {
 		pass(msg);
 		return;
 	}
@@ -71,16 +71,16 @@ test_get(void)
 		e = set(e,x,fixnum(42));
 		is_defined(get(e,x), "e[x] is defined");
 		isnt_defined(get(e,y), "e[y] is not defined");
-		obj_eql(get(e,x), fixnum(42), "x is set to 42");
+		obj_equal(get(e,x), fixnum(42), "x is set to 42");
 
 		e = set(e,y,get(e,x)); /* (set y x) */
 		is_defined(get(e,x), "x persists");
 		is_defined(get(e,y), "y is set now");
-		obj_eql(get(e,y), fixnum(42), "y is also set to 42");
+		obj_equal(get(e,y), fixnum(42), "y is also set to 42");
 
 		e = set(e,x,vstring("hi"));
-		obj_eql(get(e,x), vstring("hi"), "x is now set to the string 'hi'");
-		obj_eql(get(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
+		obj_equal(get(e,x), vstring("hi"), "x is now set to the string 'hi'");
+		obj_equal(get(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
 	}
 }
 
