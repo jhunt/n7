@@ -271,6 +271,26 @@ test_reader_lists(void)
 
 		str = read_from("t/read/string");
 		vstring_is(str, "test string", "read \"test string\"");
+
+		str = read_from("t/read/tldr");
+		vstring_is(str, "Of Man's first disobedience, and the fruit "
+				"Of that forbidden tree whose mortal taste "
+				"Brought death into the World, and all our woe, "
+				"With loss of Eden, till one greater Man "
+				"Restore us, and regain the blissful seat, "
+				"Sing, Heavenly Muse, that, on the secret top "
+				"Of Oreb, or of Sinai, didst inspire "
+				"That shepherd who first taught the chosen seed "
+				"In the beginning how the heavens and earth "
+				"Rose out of Chaos: or, if Sion hill "
+				"Delight thee more, and Siloa's brook that flowed "
+				"Fast by the oracle of God, I thence "
+				"Invoke thy aid to my adventurous song, "
+				"That with no middle flight intends to soar "
+				"Above th' Aonian mount, while it pursues "
+				"Things unattempted yet in prose or rhyme.",
+
+				"long strings don't get truncated");
 	}
 }
 
