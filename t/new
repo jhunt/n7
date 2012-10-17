@@ -1,0 +1,17 @@
+#include "assert.h"
+
+static void
+test_SOMETHING(void)
+{
+	ok(1, "dummy test");
+}
+
+int main(int argc, char **argv)
+{
+	INIT();
+
+	test_SOMETHING();
+
+	done_testing();
+	return 0;
+}
