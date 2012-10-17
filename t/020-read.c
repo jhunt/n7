@@ -176,12 +176,14 @@ test_tokenizer(void)
 	}
 }
 
+#define LONG_TOKEN_NAME "this-is-a-long-symbol-probably-the-longest-symbol-that-we-will-ever-see-in-n7-because--well--it-is-ridiculous-at-almost-140-characters-long"
 static void
 test_token_limits(void)
 {
 	WITH_ABORT_PROTECTION {
 		obj sym = read_from("t/read/looooooong");
-		ok(strlen(sym->value.sym.name) <= 120, "symbol name truncated during read");
+		ok(strcmp(sym->value.sym.name, LONG_TOKEN_NAME) == 0,
+			"symbol names not truncated during read");
 	}
 }
 

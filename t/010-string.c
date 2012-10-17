@@ -20,6 +20,8 @@ int main(int argc, char **argv)
 	ok(new == hello, "vextend reuses first arg");
 	vstring_is(hello, "Hello, Test!", "vextend strcats in-place");
 
+	vextendc(hello, '!');
+	vstring_is(hello, "Hello, Test!!", "vextendc works (albeit slowly)");
 
 	done_testing();
 	return 0;

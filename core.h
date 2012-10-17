@@ -169,6 +169,7 @@ obj eval(obj args);
 /* string */
 obj vstring(const char *s);
 obj vextend(obj s, const char *cstr, size_t n);
+obj vextendc(obj s, char c);
 obj vappend(obj s, const char *cstr);
 obj vformat(obj s, const char *fmt, ...);
 obj vstrcat(obj root, obj add);

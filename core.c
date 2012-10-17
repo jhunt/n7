@@ -149,36 +149,11 @@ set(obj env, obj sym, obj val)
 
 /**************************************************/
 
-#define TOKEN_MAX 100
-static struct {
-	unsigned short idx;
-	char buf[TOKEN_MAX];
-} TOKEN = { 0, {0} };
-
-static inline void
-token_put(char c)
-{
-	/* FIXME: in token_put, we should expand the buffer if need be */
-	if (TOKEN.idx < TOKEN_MAX - 1) {
-		TOKEN.buf[TOKEN.idx++] = c;
-	}
-}
-static inline char*
-token_val(void)
-{
-	TOKEN.buf[TOKEN.idx++] ='\0';
-	TOKEN.idx = 0;
-	return strdup(TOKEN.buf);
-}
-static inline int
-token_ok(void)
-{
-	return TOKEN.idx > 0;
-}
-
 char*
 next_token(FILE *io)
 {
+
+	obj token = vstring("");
 	char c;
 next_char:
 	switch (c = fgetc(io)) {
@@ -189,33 +164,33 @@ next_char:
 		case '\t':
 		case '\r':
 		case '\n':
-			if (token_ok()) break;
+			if (token->value.string.len > 0) break;
 			goto next_char;
 
 		case ';': /* Lisp-style comments */
 			for (c = fgetc(io); c != EOF && c != '\n'; c = fgetc(io))
 				;
-			if (token_ok()) break;
+			if (token->value.string.len > 0) break;
 			goto next_char;
 
 		case '(':
 		case ')':
 		case '`':
 		case '\'':
-			if (token_ok()) {
+			if (token->value.string.len > 0) {
 				ungetc(c, io);
 				break;
 			}
-			token_put(c);
+			vextendc(token, c);
 			break;
 
 		default:
-			token_put(c);
+			vextendc(token, c);
 			goto next_char;
 	}
 
-	if (!token_ok()) return NULL;
-	return token_val();
+	if (token->value.string.len == 0) return NULL;
+	return strdup(token->value.string.data);
 }
 
 static obj
@@ -575,6 +550,13 @@ vextend(obj s, const char *buf, size_t n)
 	s->value.string.len = len;
 	s->value.string.data = data;
 	return s;
+}
+
+obj
+vextendc(obj s, char c)
+{
+	char *buf[2] = { c, '\0' };
+	return vextend(s, buf, 1);
 }
 
 obj
