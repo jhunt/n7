@@ -19,4 +19,7 @@ void sym_isnt(const char *a, const char *b, const char *msg);
 void fixnum_is(obj got, long expect, const char *msg);
 void fixnum_isnt(obj got, long expect, const char *msg);
 
+void vstring_is(obj got, const char *expect, const char *msg);
+void vstring_isnt(obj got, const char *expect, const char *msg);
+
 #endif

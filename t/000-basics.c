@@ -1,13 +1,59 @@
 #include "assert.h"
 
-static void is_eq(obj a, obj b, const char *msg)
+static void
+test_isa_type(void)
 {
-	ok(IS_T(eq(a, b)), msg);
-}
+	WITH_ABORT_PROTECTION {
+		obj x;
 
-static void isnt_eq(obj a, obj b, const char *msg)
-{
-	ok(IS_NIL(eq(a, b)), msg);
+		x = T;
+		ok( IS_SPECIAL(x),  "T is special");
+		ok(!IS_CONS(x),     "T is not a cons");
+		ok(!IS_SYMBOL(x),   "T is not a symbol");
+		ok(!IS_FIXNUM(x),   "T is not a fixnum");
+		ok(!IS_BUILTIN(x),  "T is not a builtin");
+		ok(!IS_STRING(x),   "T is not a string");
+
+		x = NIL;
+		ok( IS_SPECIAL(x),  "NIL is special");
+		ok(!IS_CONS(x),     "NIL is not a cons");
+		ok(!IS_SYMBOL(x),   "NIL is not a symbol");
+		ok(!IS_FIXNUM(x),   "NIL is not a fixnum");
+		ok(!IS_BUILTIN(x),  "NIL is not a builtin");
+		ok(!IS_STRING(x),   "NIL is not a string");
+
+		x = cons(T, NIL);
+		ok(!IS_SPECIAL(x),  "(T . NIL) is not special");
+		ok( IS_CONS(x),     "(T . NIL) is a cons");
+		ok(!IS_SYMBOL(x),   "(T . NIL) is not a symbol");
+		ok(!IS_FIXNUM(x),   "(T . NIL) is not a fixnum");
+		ok(!IS_BUILTIN(x),  "(T . NIL) is not a builtin");
+		ok(!IS_STRING(x),   "(T . NIL) is not a string");
+
+		x = fixnum(13);
+		ok(!IS_SPECIAL(x),  "13 is not special");
+		ok(!IS_CONS(x),     "13 is not a cons");
+		ok(!IS_SYMBOL(x),   "13 is not a symbol");
+		ok( IS_FIXNUM(x),   "13 is a fixnum");
+		ok(!IS_BUILTIN(x),  "13 is not a builtin");
+		ok(!IS_STRING(x),   "13 is not a string");
+
+		x = intern("A");
+		ok(!IS_SPECIAL(x),  "'A is not special");
+		ok(!IS_CONS(x),     "'A is not a cons");
+		ok( IS_SYMBOL(x),   "'A is a symbol");
+		ok(!IS_FIXNUM(x),   "'A is not a fixnum");
+		ok(!IS_BUILTIN(x),  "'A is not a builtin");
+		ok(!IS_STRING(x),   "'A is not a string");
+
+		x = vstring("string");
+		ok(!IS_SPECIAL(x),  "\"string\" is not special");
+		ok(!IS_CONS(x),     "\"string\" is not a cons");
+		ok(!IS_SYMBOL(x),   "\"string\" is a symbol");
+		ok(!IS_FIXNUM(x),   "\"string\" is not a fixnum");
+		ok(!IS_BUILTIN(x),  "\"string\" is not a builtin");
+		ok( IS_STRING(x),   "\"string\" is not a string");
+	}
 }
 
 static void
@@ -40,6 +86,10 @@ test_equality(void)
 		obj c1 = cons(A, B);
 		obj c2 = cons(A, B);
 
+		obj s1  = vstring("s1");
+		obj s1x = vstring("s1"); /* different pointer... */
+		obj s2  = vstring("s2");
+
 		struct {
 			obj a; const char *name_a;
 			obj b; const char *name_b;
@@ -63,6 +113,11 @@ test_equality(void)
 			/* cons inequality special cases */
 			{ cons(A,B), "(A . B)", cons(A, A), "(A . A)", 0, 0, 0 },
 			{ cons(A,B), "(A . B)", cons(B, B), "(B . B)", 0, 0, 0 },
+
+			/* string equality */
+			{ s1,  "\"s1\"",  s1,  "\"s1\"",   1, 1, 1 },
+			{ s1,  "\"s1\"",  s1x, "\"s1\"'",  0, 1, 1 },
+			{ s1,  "\"s1\"",  s2,  "\"s2\"",   0, 0, 0 },
 
 			{ 0, 0, 0, 0, 0, 0, 0 }
 		};
@@ -108,6 +163,7 @@ test_type_inequality(void)
 			{ intern("sym"), "'sym"    },
 			{ fixnum(42),    "42"      },
 			{ cons(A, B),    "(A . B)" },
+			{ vstring("str"), "string" },
 			{ 0, 0 }
 		};
 
@@ -136,6 +192,7 @@ int main(int argc, char **argv)
 {
 	INIT();
 
+	test_isa_type();
 	test_hashing();
 	test_equality();
 	test_type_inequality();

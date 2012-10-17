@@ -14,7 +14,9 @@
   TODO:
 
   LISP ESSENTIALS
-  - eq *** NEXT (started with tests)
+  - equal (need print rep)
+  - princ / (dump x) or (od x)
+  - io stream support (std*, file, string, etc.)
   - support lambda
   - full reader
   - funcall stack
@@ -22,7 +24,7 @@
 
   DATA TYPES
   - vectors
-  - strings
+  - strings ****
   - complex numbers
   - floating point numbers
   - ratios
@@ -57,10 +59,12 @@
 #define hitag(obj) ((unsigned long)(obj)&~TAGGED_MASK)
 #define lotag(obj) ((unsigned long)(obj)& TAGGED_MASK)
 
+#define OBJ_SPECIAL      0x00
 #define OBJ_SYMBOL       0x01
 #define OBJ_CONS         0x02
 #define OBJ_FIXNUM       0x03
 #define OBJ_BUILTIN      0x04
+#define OBJ_STRING       0x05
 
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
@@ -83,25 +87,33 @@ struct big_object {
 			obj cdr;
 		} cons;
 
+		struct {
+			size_t len;
+			char *data;
+		}  string;
+
 	} value;
 };
 
-#define IS_A(obj,tag) (lotag(obj) == 0x00 && (obj)->type == OBJ_ ## tag)
-#define IS_CONS(obj) IS_A(obj,CONS)
-#define IS_SYM(obj)  IS_A(obj,SYMBOL)
-#define IS_FIXNUM(obj) IS_A(obj,FIXNUM)
-#define IS_BUILTIN(obj) IS_A(obj,BUILTIN)
+#define TYPE(x) (lotag(x) == 0x00 ? x->type : OBJ_SPECIAL)
 
-#define MAKE_CONSTANT(n) (struct big_object*)((n<<TAGGED_BITS)|TAG_CONSTANT)
-#define NIL MAKE_CONSTANT(0)
-#define T   MAKE_CONSTANT(1)
+#define IS_A(x,tag) (TYPE(x) == OBJ_ ## tag)
+#define IS_SPECIAL(x)    IS_A(x, SPECIAL)
+#define IS_CONS(x)       IS_A(x, CONS)
+#define IS_SYMBOL(x)     IS_A(x, SYMBOL)
+#define IS_FIXNUM(x)     IS_A(x, FIXNUM)
+#define IS_BUILTIN(x)    IS_A(x, BUILTIN)
+#define IS_STRING(x)     IS_A(x, STRING)
 
+#define MAKE_CONSTANT(n) (obj)((n<<TAGGED_BITS)|TAG_CONSTANT)
+#define NIL            MAKE_CONSTANT(0)
+#define T              MAKE_CONSTANT(1)
 /* these are used internally by the parser */
-#define CLOSE_PAREN MAKE_CONSTANT(33)
-#define CONS_DOT    MAKE_CONSTANT(34)
+#define CLOSE_PAREN    MAKE_CONSTANT(33)
+#define CONS_DOT       MAKE_CONSTANT(34)
 
-#define IS_T(obj)   ((obj) == T)
-#define IS_NIL(obj) ((obj) == NIL)
+#define IS_T(x)   ((x) == T)
+#define IS_NIL(x) ((x) == NIL)
 
 /**************************************************/
 
@@ -112,8 +124,8 @@ void _abort(const char *file, unsigned int line, const char *msg);
 /**************************************************/
 
 void INIT(void);
-
 unsigned int hash(const char *str, unsigned int lim);
+int type(obj o);
 
 #if 0
 obj same(obj a, obj b);
@@ -126,6 +138,7 @@ obj equal(obj a, obj b);
 
 /* read... */
 obj readx(FILE *io);
+obj printx(FILE *io, obj what);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);
@@ -144,6 +157,11 @@ obj intern(const char *name);
 
 /* evaluation */
 obj eval(obj args);
+
+/* string */
+obj vstring(const char *s);
+obj vextend(obj s, const char *cstr, size_t n);
+obj vstrcat(obj root, obj add);
 
 /* primitive ops */
 obj op_add(obj args);

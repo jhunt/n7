@@ -82,19 +82,28 @@ eq(obj a, obj b)
 	return NIL;
 }
 
+#define TVAL(test) ((test) ? T : NIL)
+
 obj
 eql(obj a, obj b)
 {
 	if (IS_T(eq(a,b))) return T;
+	if (TYPE(a) != TYPE(b)) return NIL;
 
-	if (IS_FIXNUM(a) && IS_FIXNUM(b) &&
-			a->value.fixnum == b->value.fixnum)
-		return T;
+	switch (TYPE(a)) {
+		case OBJ_FIXNUM:
+			return TVAL(a->value.fixnum == b->value.fixnum);
 
-	if (IS_CONS(a) && IS_CONS(b) &&
-			IS_T(eql(car(a), car(b))) &&
-			IS_T(eql(cdr(a), cdr(b))))
-		return T;
+		case OBJ_CONS:
+			return TVAL(
+				IS_T(eql(car(a), car(b))) &&
+				IS_T(eql(cdr(a), cdr(b))));
+
+		case OBJ_STRING:
+			return TVAL(
+				strcmp(a->value.string.data,
+				       b->value.string.data) == 0);
+	}
 
 	return NIL;
 }
@@ -189,6 +198,36 @@ read_number(const char *token)
 	return fixnum(fixn);
 }
 
+#define READ_STRING_MAX 100
+
+static obj
+read_string(FILE *io)
+{
+	obj s = vstring("");
+	char c, buf[READ_STRING_MAX];
+	size_t idx = 0;
+
+again:
+	switch (c = fgetc(io)) {
+		case '"':
+			break;
+
+		/* FIXME: handle escape chars in string literals */
+
+		default:
+			if (idx >= READ_STRING_MAX) {
+				vextend(s, buf, idx);
+				idx = 0;
+			}
+			buf[idx++] = c;
+
+			goto again;
+	}
+
+	vextend(s, buf, idx);
+	return s;
+}
+
 static obj
 read_list(FILE *io)
 {
@@ -219,13 +258,22 @@ read_list(FILE *io)
 obj
 readx(FILE *io)
 {
-	char *token;
+	char *token, c;
 	obj val;
 
-	token = next_token(io);
-	if (!token) return NIL; /* EOF */
+	token = NULL;
 
-	switch (*token) {
+again:
+	switch (c = fgetc(io)) {
+		case EOF:
+			return NIL;
+
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			goto again;
+
 		case '0':
 		case '1':
 		case '2':
@@ -236,6 +284,8 @@ readx(FILE *io)
 		case '7':
 		case '8':
 		case '9':
+			ungetc(c, io);
+			token = next_token(io);
 			val = read_number(token);
 			break;
 
@@ -251,13 +301,71 @@ readx(FILE *io)
 			val = CONS_DOT;
 			break;
 
+		case '"':
+			val = read_string(io);
+			break;
+
 		default:
+			ungetc(c, io);
+			token = next_token(io);
 			val = intern(token);
 			break;
 	}
 
 	free(token);
 	return val;
+}
+
+static void
+print_list(FILE *io, obj rest)
+{
+	printx(io, car(rest));
+	if (!IS_NIL(cdr(rest))) {
+		fprintf(io, " ");
+		if (IS_CONS(cdr(rest))) {
+			print_list(io, cdr(rest));
+		} else {
+			fprintf(io, ". ");
+			printx(io, cdr(rest));
+			fprintf(io, ")");
+		}
+	} else {
+		fprintf(io, ")");
+	}
+}
+
+obj
+printx(FILE *io, obj what)
+{
+	if (IS_T(what)) {
+		fprintf(io, "t");
+	} else if (IS_NIL(what)) {
+		fprintf(io, "nil");
+	} else {
+		switch (TYPE(what)) {
+			case OBJ_FIXNUM:
+				fprintf(io, "%li", what->value.fixnum);
+				break;
+
+			case OBJ_CONS:
+				fprintf(io, "(");
+				print_list(io, what);
+				break;
+
+			case OBJ_SYMBOL:
+				fprintf(io, "%s", what->value.sym.name);
+				break;
+
+			case OBJ_STRING:
+				/* FIXME: need to handle escaped characters... */
+				fprintf(io, "\"%s\"", what->value.string.data);
+				break;
+
+			default:
+				abort("unprintable object!");
+		}
+	}
+	return T;
 }
 
 /**************************************************/
@@ -387,6 +495,46 @@ eval(obj args)
 	abort("eval not finished");
 }
 
+/**  String Handling  *******************************************/
+
+obj
+vstring(const char *s)
+{
+	obj str = OBJECT(OBJ_STRING, 0);
+	str->value.string.len = strlen(s);
+	str->value.string.data = strdup(s);
+	return str;
+}
+
+obj
+vextend(obj s, const char *cstr, size_t n)
+{
+	size_t len = s->value.string.len + n;
+	char *data = realloc(s->value.string.data, len+1);
+	if (!data) abort("vextend out of memory");
+
+	strncat(data, cstr, n);
+	data[len] = '\0';
+	s->value.string.len = len;
+	s->value.string.data = data;
+	return s;
+}
+
+obj
+vstrcat(obj root, obj add)
+{
+	obj str = OBJECT(OBJ_STRING, 0);
+	size_t len = root->value.string.len + add->value.string.len;
+	str->value.string.len = len;
+
+	char *raw = calloc(len+1, sizeof(char));
+	strcat(raw, root->value.string.data);
+	strcat(raw, add->value.string.data);
+	str->value.string.data = raw;
+
+	return str;
+}
+
 /**  Primitive Operators  ***************************************/
 
 /* FIXME: math operations DON'T handle overflow well */
@@ -481,7 +629,7 @@ static void
 _dump(FILE* io, unsigned int indent, obj var)
 {
 	unsigned int i;
-	for (i = 0; i < indent; i++) { fprintf(stderr, " "); }
+	for (i = 0; i < indent; i++) { fprintf(io, " "); }
 
 	if (IS_T(var)) {
 		fprintf(io, "T");
@@ -496,7 +644,7 @@ _dump(FILE* io, unsigned int indent, obj var)
 			fprintf(io, "\n");
 			_dump(io, indent+2, cdr(var));
 			fprintf(io, " )");
-		} else if (IS_SYM(var)) {
+		} else if (IS_SYMBOL(var)) {
 			fprintf(io, " '%s", var->value.sym.name);
 		} else if (IS_FIXNUM(var)) {
 			fprintf(io, " %lu", var->value.fixnum);
