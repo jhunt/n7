@@ -6,7 +6,10 @@ test_isa_type(void)
 	WITH_ABORT_PROTECTION {
 		obj x;
 
+		ok(!DEF(UNDEF), "UNDEF is (obviously) not defined...");
+
 		x = T;
+		ok(DEF(x),          "T is defined");
 		ok( IS_SPECIAL(x),  "T is special");
 		ok(!IS_CONS(x),     "T is not a cons");
 		ok(!IS_SYMBOL(x),   "T is not a symbol");
@@ -15,6 +18,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "T is not a string");
 
 		x = NIL;
+		ok(DEF(x),          "NIL is defined");
 		ok( IS_SPECIAL(x),  "NIL is special");
 		ok(!IS_CONS(x),     "NIL is not a cons");
 		ok(!IS_SYMBOL(x),   "NIL is not a symbol");
@@ -23,6 +27,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "NIL is not a string");
 
 		x = cons(T, NIL);
+		ok(DEF(x),          "(T . NIL) is defined");
 		ok(!IS_SPECIAL(x),  "(T . NIL) is not special");
 		ok( IS_CONS(x),     "(T . NIL) is a cons");
 		ok(!IS_SYMBOL(x),   "(T . NIL) is not a symbol");
@@ -31,6 +36,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "(T . NIL) is not a string");
 
 		x = fixnum(13);
+		ok(DEF(x),          "13 is defined");
 		ok(!IS_SPECIAL(x),  "13 is not special");
 		ok(!IS_CONS(x),     "13 is not a cons");
 		ok(!IS_SYMBOL(x),   "13 is not a symbol");
@@ -39,6 +45,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "13 is not a string");
 
 		x = intern("A");
+		ok(DEF(x),          "'A is defined");
 		ok(!IS_SPECIAL(x),  "'A is not special");
 		ok(!IS_CONS(x),     "'A is not a cons");
 		ok( IS_SYMBOL(x),   "'A is a symbol");
@@ -47,6 +54,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "'A is not a string");
 
 		x = vstring("string");
+		ok(DEF(x),          "\"string\" is defined");
 		ok(!IS_SPECIAL(x),  "\"string\" is not special");
 		ok(!IS_CONS(x),     "\"string\" is not a cons");
 		ok(!IS_SYMBOL(x),   "\"string\" is a symbol");
@@ -75,6 +83,9 @@ static void
 test_equality(void)
 {
 	WITH_ABORT_PROTECTION {
+
+		/* implementation detail: (eq UNDEF UNDEF) -> nil */
+		ok(IS_NIL(eq(UNDEF, UNDEF)), "UNDEF is not even eq to UNDEF");
 
 		obj A = intern("A");
 		obj B = intern("B");
@@ -182,8 +193,13 @@ test_type_inequality(void)
 						zoo[i].name);
 				ok(IS_NIL(eql(zoo[j].value, zoo[i].value)), msg);
 				free(msg);
-
 			}
+
+			/* also... UNDEF is never eq to anything... */
+			msg = str("(eql %s UNDEF) should be NIL (nothing is ever undef)",
+					zoo[i].name);
+			ok(IS_NIL(eq(zoo[i].value, UNDEF)), msg);
+			free(msg);
 		}
 	}
 }
