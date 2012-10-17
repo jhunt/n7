@@ -22,4 +22,9 @@ void fixnum_isnt(obj got, long expect, const char *msg);
 void vstring_is(obj got, const char *expect, const char *msg);
 void vstring_isnt(obj got, const char *expect, const char *msg);
 
+void obj_equal(obj got, obj exp, const char *msg);
+
+void is_defined(obj x, const char *msg);
+void isnt_defined(obj x, const char *msg);
+
 #endif

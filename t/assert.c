@@ -113,3 +113,43 @@ vstring_isnt(obj got, const char *expect, const char *msg)
 	     diag("");
 }
 
+void
+obj_equal(obj got, obj exp, const char *msg)
+{
+	if (IS_T(equal(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+}
+
+void
+is_defined(obj x, const char *msg)
+{
+	if (DEF(x)) {
+		pass(msg);
+		return;
+	}
+
+	vdiag(str("  Failed test '%s'", msg));
+	     diag("       got: <undefined>");
+	     diag("  expected: anything else...");
+}
+
+void
+isnt_defined(obj x, const char *msg)
+{
+	if (!DEF(x)) {
+		pass(msg);
+		return;
+	}
+
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(x)));
+	 diag("  expected: <undefined>");
+}
+
