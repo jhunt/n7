@@ -141,6 +141,8 @@ obj equal(obj a, obj b);
 /* read... */
 obj readx(FILE *io);
 obj printx(FILE *io, obj what);
+obj vdump(obj what);
+char* cdump(obj what);
 
 /* consing to a better tomorrow */
 obj cons(obj car, obj cdr);
@@ -163,6 +165,8 @@ obj eval(obj args);
 /* string */
 obj vstring(const char *s);
 obj vextend(obj s, const char *cstr, size_t n);
+obj vappend(obj s, const char *cstr);
+obj vformat(obj s, const char *fmt, ...);
 obj vstrcat(obj root, obj add);
 
 /* primitive ops */
@@ -172,9 +176,11 @@ obj op_mult(obj args);
 obj op_div(obj args);
 obj op_apply(obj fn, obj args);
 
-/* debugging; it happens to the best of us */
+/* debugging; superceded by vdump / printx and friends */
+#if 0
 void dump_obj(const char *tag, obj o);
 void dump_sym(obj sym);
 void dump_syms(void);
+#endif
 
 #endif

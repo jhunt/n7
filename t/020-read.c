@@ -194,8 +194,6 @@ test_reader(void)
 		if (IS_FIXNUM(x)) {
 			fixnum_is(x, 20, "read 20 as a fixnum");
 		} else {
-			dump_obj("# x: ",x);
-			diag("failed to read fixnum from t/read/number");
 			fail("read 20 as a fixnum");
 		}
 

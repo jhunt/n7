@@ -316,55 +316,80 @@ again:
 	return val;
 }
 
+static void vdump_x(obj str, obj what);
+static void vdump_l(obj str, obj rest);
+
 static void
-print_list(FILE *io, obj rest)
+vdump_l(obj str, obj rest)
 {
-	printx(io, car(rest));
+	vdump_x(str, car(rest));
 	if (!IS_NIL(cdr(rest))) {
-		fprintf(io, " ");
+		vappend(str, " ");
 		if (IS_CONS(cdr(rest))) {
-			print_list(io, cdr(rest));
+			vdump_l(str, cdr(rest));
 		} else {
-			fprintf(io, ". ");
-			printx(io, cdr(rest));
-			fprintf(io, ")");
+			vappend(str, ". ");
+			vdump_x(str, cdr(rest));
+			vappend(str, ")");
 		}
 	} else {
-		fprintf(io, ")");
+		vappend(str, ")");
 	}
 }
 
-obj
-printx(FILE *io, obj what)
+static void
+vdump_x(obj str, obj what)
 {
 	if (IS_T(what)) {
-		fprintf(io, "t");
+		vappend(str, "t");
 	} else if (IS_NIL(what)) {
-		fprintf(io, "nil");
+		vappend(str, "nil");
 	} else {
 		switch (TYPE(what)) {
 			case OBJ_FIXNUM:
-				fprintf(io, "%li", what->value.fixnum);
+				vformat(str, "%li", what->value.fixnum);
 				break;
 
 			case OBJ_CONS:
-				fprintf(io, "(");
-				print_list(io, what);
+				vappend(str, "(");
+				vdump_l(str, what);
 				break;
 
 			case OBJ_SYMBOL:
-				fprintf(io, "%s", what->value.sym.name);
+				vformat(str, "%s", what->value.sym.name);
 				break;
 
 			case OBJ_STRING:
 				/* FIXME: need to handle escaped characters... */
-				fprintf(io, "\"%s\"", what->value.string.data);
+				vformat(str, "\"%s\"", what->value.string.data);
 				break;
 
 			default:
 				abort("unprintable object!");
 		}
 	}
+}
+
+obj
+vdump(obj what)
+{
+	obj str = vstring("");
+	vdump_x(str, what);
+	return str;
+}
+
+char*
+cdump(obj what)
+{
+	obj str = vdump(what);
+	return str->value.string.data;
+}
+
+obj
+printx(FILE *io, obj what)
+{
+	obj rep = vdump(what);
+	fprintf(io, "%s", rep->value.string.data);
 	return T;
 }
 
@@ -507,17 +532,44 @@ vstring(const char *s)
 }
 
 obj
-vextend(obj s, const char *cstr, size_t n)
+vextend(obj s, const char *buf, size_t n)
 {
 	size_t len = s->value.string.len + n;
 	char *data = realloc(s->value.string.data, len+1);
 	if (!data) abort("vextend out of memory");
 
-	strncat(data, cstr, n);
+	strncat(data, buf, n);
 	data[len] = '\0';
 	s->value.string.len = len;
 	s->value.string.data = data;
 	return s;
+}
+
+obj
+vappend(obj s, const char *cstr)
+{
+	return vextend(s, cstr, strlen(cstr));
+}
+
+obj
+vformat(obj s, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	size_t len = vsnprintf(NULL, 0, fmt, ap)+1; /* +1 for \0 */
+	va_end(ap);
+
+	char *buf = calloc(len, sizeof(char));
+	if (!buf) abort("vformat: out of memory");
+
+	va_start(ap, fmt);
+	vsnprintf(buf, len, fmt, ap);
+	va_end(ap);
+
+	obj rc = vappend(s, buf);
+	free(buf);
+	return rc;
 }
 
 obj
@@ -617,6 +669,7 @@ op_apply(obj fn, obj args)
 
 /* LCOV_EXCL_START */
 
+#if 0
 static const char *DUMPER_TYPE_NAMES[] = {
 	"UNKNOWN",
 	"symbol",
@@ -684,4 +737,6 @@ dump_syms(void)
 	}
 	fprintf(stderr, "-----------------\n");
 }
+#endif
+
 /* LCOV_EXCL_STOP */
