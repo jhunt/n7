@@ -177,14 +177,21 @@ obj intern(const char *name);
 /* evaluation */
 obj eval(obj args, obj env);
 
-/* string */
-obj vstring(const char *s);
-obj vextend(obj s, const char *cstr, size_t n);
-obj vextendc(obj s, char c);
-obj vappend(obj s, const char *cstr);
-obj vformat(obj s, const char *fmt, ...);
-obj vstrcat(obj root, obj add);
-char vchar(obj s, size_t idx);
+/* string : dup/copy/create */
+obj str_dup(obj s);
+obj str_dupc(const char *c);
+obj str_dupb(const char *buf, size_t len);
+obj str_dupf(const char *fmt, ...);
+/* string : concatenate */
+obj str_cat(obj dst, obj src);
+obj str_catc(obj dst, const char *src);
+obj str_catb(obj dst, const char *buf, size_t len);
+obj str_catf(obj dst, const char *fmt, ...);
+/* string : utilities */
+char *cstr(obj s);
+void strx(obj dst, const char *src);
+void strc(obj dst, char c);
+void strf(obj dst, const char *fmt, ...);
 
 /* io */
 obj io_fdopen(FILE *fd);

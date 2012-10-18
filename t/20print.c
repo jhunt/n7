@@ -51,7 +51,7 @@ test_print(void)
 		print_ok(cons(X,cons(Y,NIL)), "(x y)", "list of 2 prints ok");
 		print_ok(cons(X,cons(Y,cons(X,NIL))), "(x y x)", "list of 3 prints ok");
 
-		obj str = vstring("kill troll with axe");
+		obj str = str_dupc("kill troll with axe");
 		print_ok(str, "\"kill troll with axe\"", "string prints ok");
 
 		obj A = intern("A");

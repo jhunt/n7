@@ -3,7 +3,7 @@
 static void
 test_readfile(void)
 {
-	obj xyzzy = vstring("something to write");
+	obj xyzzy = str_dupc("something to write");
 	obj io = io_fopen("t/io/writefile1", "w");
 
 	ok(IS_IO(io), "io_fopen returns an io object");
@@ -33,7 +33,7 @@ test_readfile(void)
 static void
 test_readstring(void)
 {
-	obj xyzzy = vstring("this is a test string");
+	obj xyzzy = str_dupc("this is a test string");
 	obj io = io_string(xyzzy->value.string.data);
 
 	ok(IS_IO(io), "io_string returns an io object");
@@ -51,7 +51,7 @@ test_readstring(void)
 
 	io_rewind(io);
 
-	obj overwrite = vstring("OVERWRITE!");
+	obj overwrite = str_dupc("OVERWRITE!");
 	io_write_str(io, overwrite);
 	io_rewind(io);
 	tmp = io_read_buf(io, 1024);

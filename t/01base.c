@@ -58,7 +58,7 @@ test_isa_type(void)
 		ok(!IS_STRING(x),   "'A is not a string");
 		ok(!IS_IO(x),       "'A is not an io");
 
-		x = vstring("string");
+		x = str_dupc("string");
 		ok(DEF(x),          "\"string\" is defined");
 		ok(!IS_SPECIAL(x),  "\"string\" is not special");
 		ok(!IS_CONS(x),     "\"string\" is not a cons");
@@ -103,9 +103,9 @@ test_equality(void)
 		obj c1 = cons(A, B);
 		obj c2 = cons(A, B);
 
-		obj s1  = vstring("s1");
-		obj s1x = vstring("s1"); /* different pointer... */
-		obj s2  = vstring("s2");
+		obj s1  = str_dupc("s1");
+		obj s1x = str_dupc("s1"); /* different pointer... */
+		obj s2  = str_dupc("s2");
 
 		struct {
 			obj a; const char *name_a;
@@ -180,7 +180,7 @@ test_type_inequality(void)
 			{ intern("sym"), "'sym"    },
 			{ fixnum(42),    "42"      },
 			{ cons(A, B),    "(A . B)" },
-			{ vstring("str"), "string" },
+			{ str_dupc("str"), "string" },
 			{ 0, 0 }
 		};
 

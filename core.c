@@ -164,7 +164,7 @@ char*
 next_token(FILE *io)
 {
 
-	obj token = vstring("");
+	obj token = str_dupc("");
 	char c;
 next_char:
 	switch (c = fgetc(io)) {
@@ -192,11 +192,11 @@ next_char:
 				ungetc(c, io);
 				break;
 			}
-			vextendc(token, c);
+			strc(token, c);
 			break;
 
 		default:
-			vextendc(token, c);
+			strc(token, c);
 			goto next_char;
 	}
 
@@ -221,9 +221,8 @@ read_number(const char *token)
 static obj
 read_string(FILE *io)
 {
-	obj s = vstring("");
-	char c, buf[READ_STRING_MAX];
-	size_t idx = 0;
+	obj s = str_dupc("");
+	char c;
 
 again:
 	switch (c = fgetc(io)) {
@@ -233,16 +232,10 @@ again:
 		/* FIXME: handle escape chars in string literals */
 
 		default:
-			if (idx >= READ_STRING_MAX) {
-				vextend(s, buf, idx);
-				idx = 0;
-			}
-			buf[idx++] = c;
-
+			strc(s,c);
 			goto again;
 	}
 
-	vextend(s, buf, idx);
 	return s;
 }
 
@@ -342,16 +335,17 @@ vdump_l(obj str, obj rest)
 {
 	vdump_x(str, car(rest));
 	if (!IS_NIL(cdr(rest))) {
-		vappend(str, " ");
+		strc(str, ' ');
 		if (IS_CONS(cdr(rest))) {
 			vdump_l(str, cdr(rest));
 		} else {
-			vappend(str, ". ");
+			strc(str, '.');
+			strc(str, ' ');
 			vdump_x(str, cdr(rest));
-			vappend(str, ")");
+			strc(str, ')');
 		}
 	} else {
-		vappend(str, ")");
+		strc(str, ')');
 	}
 }
 
@@ -359,31 +353,33 @@ static void
 vdump_x(obj str, obj what)
 {
 	if (IS_T(what)) {
-		vappend(str, "t");
+		strc(str, 't');
 	} else if (IS_NIL(what)) {
-		vappend(str, "nil");
+		strx(str, "nil");
 	} else {
 		switch (TYPE(what)) {
 			case OBJ_FIXNUM:
-				vformat(str, "%li", what->value.fixnum);
+				strf(str, "%li", what->value.fixnum);
 				break;
 
 			case OBJ_CONS:
-				vappend(str, "(");
+				strc(str, '(');
 				vdump_l(str, what);
 				break;
 
 			case OBJ_SYMBOL:
-				vformat(str, "%s", what->value.sym.name);
+				strf(str, "%s", what->value.sym.name);
 				break;
 
 			case OBJ_STRING:
 				/* FIXME: need to handle escaped characters... */
-				vformat(str, "\"%s\"", what->value.string.data);
+				strf(str, "\"%s\"", what->value.string.data);
 				break;
 
 			default:
-				abort("unprintable object!");
+				strf(str, "<#%x:%p>", TYPE(what), what);
+				break;
+				//abort("unprintable object!");
 		}
 	}
 }
@@ -391,7 +387,7 @@ vdump_x(obj str, obj what)
 obj
 vdump(obj what)
 {
-	obj str = vstring("");
+	obj str = str_dupc("");
 	vdump_x(str, what);
 	return str;
 }
@@ -561,82 +557,158 @@ eval(obj args, obj env)
 /**  String Handling  *******************************************/
 
 obj
-vstring(const char *s)
+str_dup(obj s)
 {
-	obj str = OBJECT(OBJ_STRING, 0);
-	str->value.string.len = strlen(s);
-	str->value.string.data = strdup(s);
-	return str;
+	return str_dupc(cstr(s));
 }
 
 obj
-vextend(obj s, const char *buf, size_t n)
+str_dupc(const char *c)
 {
-	size_t len = s->value.string.len + n;
-	char *data = realloc(s->value.string.data, len+1);
-	if (!data) abort("vextend out of memory");
-
-	strncat(data, buf, n);
-	data[len] = '\0';
-	s->value.string.len = len;
-	s->value.string.data = data;
+	if (!c) return NIL;
+	obj s = OBJECT(OBJ_STRING, 0);
+	s->value.string.len = strlen(c);
+	s->value.string.data = strdup(c);
 	return s;
 }
 
 obj
-vextendc(obj s, char c)
+str_dupb(const char *buf, size_t len)
 {
-	char buf[2] = { c, '\0' };
-	return vextend(s, buf, 1);
+	if (!buf) return NIL;
+	obj s = OBJECT(OBJ_STRING, 0);
+	s->value.string.len = len;
+	s->value.string.data = calloc(len+1, sizeof(char));
+	memcpy(s->value.string.data, buf, len);
+	return s;
 }
 
 obj
-vappend(obj s, const char *cstr)
-{
-	return vextend(s, cstr, strlen(cstr));
-}
-
-obj
-vformat(obj s, const char *fmt, ...)
+str_dupf(const char *fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
-	size_t len = vsnprintf(NULL, 0, fmt, ap)+1; /* +1 for \0 */
+	size_t len = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
 
-	char *buf = calloc(len, sizeof(char));
-	if (!buf) abort("vformat: out of memory");
+	char *buf = calloc(len+1, sizeof(char));
+	if (!buf) bail("memory exhausted (str_dupf:malloc failed)");
 
 	va_start(ap, fmt);
-	vsnprintf(buf, len, fmt, ap);
+	vsnprintf(buf, len+1, fmt, ap);
 	va_end(ap);
 
-	obj rc = vappend(s, buf);
-	free(buf);
-	return rc;
+	obj s = OBJECT(OBJ_STRING, 0);
+	s->value.string.len = len;
+	s->value.string.data = buf;
+	return s;
 }
 
 obj
-vstrcat(obj root, obj add)
+str_cat(obj dst, obj src)
 {
-	obj str = OBJECT(OBJ_STRING, 0);
-	size_t len = root->value.string.len + add->value.string.len;
-	str->value.string.len = len;
-
-	char *raw = calloc(len+1, sizeof(char));
-	strcat(raw, root->value.string.data);
-	strcat(raw, add->value.string.data);
-	str->value.string.data = raw;
-
-	return str;
+	if (!IS_STRING(dst) || !IS_STRING(src)) return NIL;
+	return str_dupf("%s%s",
+			dst->value.string.data,
+			src->value.string.data);
 }
 
-char
-vchar(obj s, size_t idx)
+obj
+str_catc(obj dst, const char *src)
 {
-	if (idx < 0 || idx >= s->value.string.len) return 0;
-	return s->value.string.data[idx];
+	if (!IS_STRING(dst)) return NIL;
+	if (!src) return str_dup(dst);
+	return str_dupf("%s%s",
+			dst->value.string.data,
+			src);
+}
+
+obj
+str_catb(obj dst, const char *buf, size_t len)
+{
+	return str_cat(dst, str_dupb(buf, len));
+}
+
+obj
+str_catf(obj dst, const char *fmt, ...)
+{
+	if (!IS_STRING(dst)) return NIL;
+
+	va_list ap;
+	va_start(ap, fmt);
+	size_t len = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+
+	char *buf = calloc(len+1, sizeof(char));
+	if (!buf) bail("memory exhausted (str_catf:malloc failed)");
+
+	va_start(ap, fmt);
+	vsnprintf(buf, len+1, fmt, ap);
+	va_end(ap);
+
+	obj s = str_catc(dst, buf);
+	free(buf);
+	return s;
+}
+
+char*
+cstr(obj s)
+{
+	if (!IS_STRING(s)) return NULL;
+	return s->value.string.data;
+}
+
+void
+strx(obj dst, const char *src)
+{
+	if (!IS_STRING(dst)) return;
+	size_t d_len = dst->value.string.len;
+	size_t s_len = strlen(src);
+	size_t l = d_len + s_len;
+
+	char *re = realloc(dst->value.string.data, l+1);
+	if (!re) abort("strx: out of memory");
+
+	strncpy(re+d_len, src, s_len+1);
+	dst->value.string.len = l;
+	dst->value.string.data = re;
+}
+
+void
+strc(obj dst, char c)
+{
+	if (!IS_STRING(dst)) return;
+	size_t d_len = dst->value.string.len;
+
+	char *re = realloc(dst->value.string.data, d_len+1+1);
+	if (!re) abort("strx: out of memory");
+
+	*(re+d_len) = c;
+	*(re+d_len+1) = '\0';
+
+	dst->value.string.len++;
+	dst->value.string.data = re;
+}
+
+void
+strf(obj dst, const char *fmt, ...)
+{
+	if (!IS_STRING(dst)) return;
+
+	va_list ap;
+	va_start(ap, fmt);
+	size_t len = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+
+	char *buf = calloc(len+1, sizeof(char));
+	if (!buf) bail("memory exhausted (strf:malloc failed)");
+
+	va_start(ap, fmt);
+	vsnprintf(buf, len+1, fmt, ap);
+	va_end(ap);
+
+	strx(dst, buf);
+	free(buf);
 }
 
 /**  IO  ********************************************************/
@@ -738,7 +810,7 @@ io_read_buf(obj io, size_t n)
 		if (!buf) abort("io_read_buf: out of memory");
 
 		if (fread(buf, 1, n, io->value.io.fd) > 0) {
-			res = vstring(buf);
+			res = str_dupc(buf);
 		}
 		free(buf);
 
@@ -749,7 +821,7 @@ io_read_buf(obj io, size_t n)
 		strncpy(buf, io->value.io.data+io->value.io.i, n);
 		io->value.io.len += strlen(buf);
 
-		res = vstring(buf);
+		res = str_dupc(buf);
 		free(buf);
 	}
 

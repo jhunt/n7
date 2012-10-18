@@ -40,8 +40,8 @@ test_get_set(void)
 		is_defined(get(e,y), "y is set now");
 		obj_equal(get(e,y), fixnum(42), "y is also set to 42");
 
-		e = set(e,x,vstring("hi"));
-		obj_equal(get(e,x), vstring("hi"), "x is now set to the string 'hi'");
+		e = set(e,x,str_dupc("hi"));
+		obj_equal(get(e,x), str_dupc("hi"), "x is now set to the string 'hi'");
 		obj_equal(get(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
 	}
 }
@@ -141,29 +141,115 @@ test_nlist_helpers(void)
 
 /***  STRINGS  *********************************************/
 
+#define ASCII " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+
 static void
-test_vstrings(void)
+test_str_dups(void)
 {
-	obj s = vstring("test string");
-	vstring_is(s, "test string", "Basic string creation");
+	ok(IS_NIL(str_dupc(NULL)),         "str_dupc(NULL) == NIL");
+	ok(IS_NIL(str_dup(fixnum(8))),     "str_dup(8) == NIL");
+	ok(IS_NIL(str_dup(intern("sym"))), "str_dup('sym) == NIL");
 
-	obj hello = vstring("Hello, ");
-	obj world = vstring("World!");
-	obj new = vstrcat(hello, world);
+	ok(cstr(NIL)           == NULL, "cstr(NIL) == NULL");
+	ok(cstr(fixnum(42))    == NULL, "cstr(42) == NULL");
+	ok(cstr(intern("sym")) == NULL, "cstr('sym) == NULL");
 
-	ok(new != hello, "vstrcat does not reuse first arg");
-	ok(new != world, "vstrcat does not reuse second arg");
+	obj x = str_dupc(ASCII);
+	obj y = str_dupc(ASCII);
+	obj_equal(x,y, "str_dupc(cstr) == str_dupc(cstr)");
+	ok(cstr(x) != NULL, "cstr returns non-NULL pointer");
+	if (cstr(x) == NULL) bail("cstr(x) returned NULL! ALL BETS ARE OFF!!");
+	ok(strcmp(cstr(x), ASCII) == 0, "cstr retrieves raw C-string");
 
-	vstring_is(hello, "Hello, ", "vstrcat does not modify first arg");
-	vstring_is(world, "World!",  "vstrcat does not modify second arg");
-	vstring_is(new, "Hello, World!", "vstrcat cats strs yay!");
+	obj z = str_dup(x);
+	obj_equal(x,z, "str_dup(obj) == str_dup(obj)");
 
-	new = vextend(hello, "Test!  this is ignored", 5);
-	ok(new == hello, "vextend reuses first arg");
-	vstring_is(hello, "Hello, Test!", "vextend strcats in-place");
+	const char *buf = "hello, world";
+	x = str_dupb(buf, 5);
+	y = str_dupc("hello");
+	obj_equal(x,y, "str_dupb(...) handles substring properly");
 
-	vextendc(hello, '!');
-	vstring_is(hello, "Hello, Test!!", "vextendc works (albeit slowly)");
+	x = str_dupb(buf, 0);
+	y = str_dupc("");
+	obj_equal(x,y, "str_dupb handles empty string");
+
+	x = str_dupf("%04x, %s", 48879, "it's what's for dinner");
+	y = str_dupc("beef, it's what's for dinner");
+	obj_equal(x,y, "str_dupf formats nicely");
+}
+
+static void
+test_str_cats(void)
+{
+	obj hello = str_dupc("Hello, ");
+	obj world = str_dupc("World!");
+	obj combined = NIL;
+
+	/** str_cat **/
+
+	ok(IS_NIL(str_cat(NIL, NIL)), "str_cat(nil,nil) == NIL");
+	ok(IS_NIL(str_cat(fixnum(4), world)), "str_cat(4,str) == NIL");
+	ok(IS_NIL(str_cat(hello, intern("sym"))), "str_cat(str,'sym) == NIL");
+
+	combined = str_cat(hello, world);
+	ok(combined != hello, "str_cat returns new pointer (not arg1)");
+	ok(combined != world, "str_cat returns new pointer (not arg2)");
+	obj_equal(combined, str_dupc("Hello, World!"), "str_cat works with string objects");
+
+	/** str_catc **/
+
+	ok(IS_NIL(str_catc(NIL, "...")), "str_cat(NIL, \"...\") == NIL");
+	ok(IS_NIL(str_catc(intern("hello"), "...")), "str_cat('hello, \"...\") == NIL");
+
+	combined = str_catc(hello, "Testing...");
+	ok(combined != hello, "str_catc returns new pointer (not arg1)");
+	obj_equal(combined, str_dupc("Hello, Testing..."), "str_catc works with C-strings");
+
+	combined = str_catc(hello, "");
+	obj_equal(combined, str_dupc("Hello, "), "str_catc works with an empty C-string");
+
+	combined = str_catc(hello, NULL);
+	obj_equal(combined, str_dupc("Hello, "), "str_catc treats NULL C-string as \"\"");
+
+	/** str_catb **/
+
+	const char *buf = "red blue green";
+	obj start = str_dupc("the sky is ");
+
+	ok(IS_NIL(str_catb(NIL, buf, 5)), "str_catb with non-string dst returns NIL");
+
+	combined = str_catb(start, buf, 3);
+	ok(combined != start, "str_catb returns new pointer (not arg1)");
+	obj_equal(combined, str_dupc("the sky is red"), "str_catb can extract from a buffer");
+
+	combined = str_catb(start, buf+3+1, 4);
+	obj_equal(combined, str_dupc("the sky is blue"), "str_catb can extract from the middle of a buffer");
+
+	combined = str_catb(start, buf, 0);
+	obj_equal(combined, start, "str_catb with zero-length appends empty string");
+
+	/** str_catf **/
+
+	ok(IS_NIL(str_catf(fixnum(9), "%d", 99)), "str_catf with non-string dst returns NIL");
+
+	combined = str_catf(start, "%s, %d", buf+3+1+4+1, 42);
+	ok(combined != start, "str_catf returns new pointer (not arg1)");
+	obj_equal(combined, str_dupc("the sky is green, 42"), "str_catf works");
+}
+
+static void
+test_str_utils(void)
+{
+	obj hello = str_dupc("Hello, ");
+
+	strx(hello, "World");
+	obj_equal(hello, str_dupc("Hello, World"), "strx concatenates in-place");
+
+	strc(hello, '!');
+	obj_equal(hello, str_dupc("Hello, World!"), "strc appends a single character");
+
+	strf(hello, " -- %lu", 1337);
+	obj_equal(hello, str_dupc("Hello, World! -- 1337"), "strf appends with style");
 }
 
 /***********************************************************/
@@ -179,7 +265,9 @@ int main(int argc, char **argv)
 	test_list_op_aborts();
 	test_nlist_helpers();
 
-	test_vstrings();
+	test_str_dups();
+	test_str_cats();
+	test_str_utils();
 
 	done_testing();
 	return 0;
