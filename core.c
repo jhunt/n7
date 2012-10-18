@@ -10,11 +10,13 @@
 /* abort-specific implementation details */
 static jmp_buf *ABORT_JMP = NULL;
 
+#define ABORT_OOM(subsys) abort(subsys ": out of memory")
+
 static obj
 OBJECT(unsigned short type, size_t varlen)
 {
 	obj o = calloc(1,sizeof(bigobj)+varlen);
-	if (!o) abort("malloc failed"); /* LCOV_EXCL_LINE */
+	if (!o) ABORT_OOM("OBJECT"); /* LCOV_EXCL_LINE */
 	o->type = type;
 	return o;
 }
@@ -23,7 +25,7 @@ static char*
 lc(const char *s)
 {
 	char *p, *new = strdup(s);
-	if (!new) abort("strdup failed"); /* LCOV_EXCL_LINE */
+	if (!new) ABORT_OOM("lc"); /* LCOV_EXCL_LINE */
 	for (p = new; *p; p++) {
 		if (isupper(*p)) *p = tolower(*p);
 	}
@@ -579,6 +581,7 @@ str_dupb(const char *buf, size_t len)
 	obj s = OBJECT(OBJ_STRING, 0);
 	s->value.string.len = len;
 	s->value.string.data = calloc(len+1, sizeof(char));
+	if (!s->value.string.data) ABORT_OOM("str_dupb"); /* LCOV_EXCL_LINE */
 	memcpy(s->value.string.data, buf, len);
 	return s;
 }
@@ -592,7 +595,7 @@ str_dupf(const char *fmt, ...)
 	va_end(ap);
 
 	char *buf = calloc(len+1, sizeof(char));
-	if (!buf) bail("memory exhausted (str_dupf:malloc failed)");
+	if (!buf) ABORT_OOM("str_dupf"); /* LCOV_EXCL_LINE */
 
 	va_start(ap, fmt);
 	vsnprintf(buf, len+1, fmt, ap);
@@ -640,7 +643,7 @@ str_catf(obj dst, const char *fmt, ...)
 	va_end(ap);
 
 	char *buf = calloc(len+1, sizeof(char));
-	if (!buf) bail("memory exhausted (str_catf:malloc failed)");
+	if (!buf) ABORT_OOM("str_catf"); /* LCOV_EXCL_LINE */
 
 	va_start(ap, fmt);
 	vsnprintf(buf, len+1, fmt, ap);
@@ -701,7 +704,7 @@ strf(obj dst, const char *fmt, ...)
 	va_end(ap);
 
 	char *buf = calloc(len+1, sizeof(char));
-	if (!buf) bail("memory exhausted (strf:malloc failed)");
+	if (!buf) ABORT_OOM("strf"); /* LCOV_EXCL_LINE */
 
 	va_start(ap, fmt);
 	vsnprintf(buf, len+1, fmt, ap);
@@ -805,19 +808,16 @@ io_read_buf(obj io, size_t n)
 	/* FIXME: check type of io and str! */
 	obj res = NIL;
 
-	if (io->value.io.fd) {
-		char *buf = calloc(n+1, sizeof(char));
-		if (!buf) abort("io_read_buf: out of memory");
+	char *buf = calloc(n+1, sizeof(char));
+	if (!buf) ABORT_OOM("io_read_buf"); /* LCOV_EXCL_LINE */
 
+	if (io->value.io.fd) {
 		if (fread(buf, 1, n, io->value.io.fd) > 0) {
 			res = str_dupc(buf);
 		}
 		free(buf);
 
 	} else {
-		char *buf = calloc(n+1, sizeof(char));
-		if (!buf) abort("io_read_buf: out of memory");
-
 		strncpy(buf, io->value.io.data+io->value.io.i, n);
 		io->value.io.len += strlen(buf);
 
