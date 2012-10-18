@@ -187,14 +187,29 @@ obj vstrcat(obj root, obj add);
 char vchar(obj s, size_t idx);
 
 /* io */
-obj iofd(FILE *file);
-obj iofile(const char *path, const char *mode);
-obj iostring(const char *str, const char *mode);
-obj ioclose(obj io);
-obj iowriteb(obj io, obj str);
-obj ioreadb(obj io, obj n);
-obj iowrite(obj io, obj form);
-obj ioread(obj io);
+obj io_fdopen(FILE *fd);
+obj io_fopen(const char *path, const char *mode);
+obj io_string(const char *str);
+void io_rewind(obj io);
+obj io_close(obj io);
+
+/* io - read/write a single character */
+char io_getc(obj io);
+char io_putc(obj io, char c);
+
+/* io - read delimited input */
+obj io_read_delim(obj io, obj delims, int incl_delim);
+
+/* io - write a single vstring */
+obj io_write_str(obj io, obj str);
+
+/* io - read/write binary segments */
+obj io_read_buf(obj io, size_t n);
+obj io_write_buf(obj io, const char *buf, size_t n);
+
+/* io - read/write an S-expression */
+obj io_read_form(obj io);
+obj io_write_form(obj io, obj form);
 
 /* primitive ops */
 obj op_add(obj args);

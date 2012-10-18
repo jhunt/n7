@@ -642,7 +642,7 @@ vchar(obj s, size_t idx)
 /**  IO  ********************************************************/
 
 obj
-iofd(FILE *file)
+io_fdopen(FILE *file)
 {
 	obj io = OBJECT(OBJ_IO, 0);
 	io->value.io.data = NULL;
@@ -653,14 +653,14 @@ iofd(FILE *file)
 }
 
 obj
-iofile(const char *path, const char *mode)
+io_fopen(const char *path, const char *mode)
 {
 	FILE *fd = fopen(path, mode);
-	return fd ? iofd(fd) : NIL;
+	return fd ? io_fdopen(fd) : NIL;
 }
 
 obj
-iostring(const char *str, const char *mode)
+io_string(const char *str)
 {
 	obj io = OBJECT(OBJ_IO, 0);
 	io->value.io.fd = NULL;
@@ -671,58 +671,89 @@ iostring(const char *str, const char *mode)
 	return io;
 }
 
+void
+io_rewind(obj io)
+{
+	/* FIXME: check type of io and str! */
+	if (io->value.io.fd) {
+		fseek(io->value.io.fd, 0, SEEK_SET);
+	} else {
+		io->value.io.i = 0;
+	}
+}
+
 obj
-ioclose(obj io)
+io_close(obj io)
 {
 	/* FIXME: check type of io and str! */
 	if (io->value.io.fd) {
 		fclose(io->value.io.fd);
 		io->value.io.fd = NULL;
-	} else {
-		abort("string io not implemented");
 	}
 
 	return T;
 }
 
-obj
-iowriteb(obj io, obj str)
+char
+io_getc(obj io)
 {
 	/* FIXME: check type of io and str! */
 	if (io->value.io.fd) {
-		int nc = fprintf(io->value.io.fd, str->value.string.data);
+		return fgetc(io->value.io.fd);
+	} else {
+		if (io->value.io.i >= io->value.io.len) return EOF;
+		return io->value.io.data[io->value.io.i++];
+	}
+
+	return EOF;
+}
+
+obj
+io_write_str(obj io, obj str)
+{
+	/* FIXME: check type of io and str! */
+	if (io->value.io.fd) {
+		int nc = fprintf(io->value.io.fd, "%s", str->value.string.data);
 		if (nc < 0) return NIL;
 		return T;
 	} else {
-		abort("string io not implemented");
+		/* FIXME: io_write_str needs some work */
+		free(io->value.io.data);
+		io->value.io.data = strdup(str->value.string.data);
+		io->value.io.len = strlen(io->value.io.data);
+		io->value.io.i = io->value.io.len;
+		return T;
 	}
 	return NIL;
 }
 
 obj
-ioreadb(obj io, obj n)
+io_read_buf(obj io, size_t n)
 {
 	/* FIXME: check type of io and str! */
+	obj res = NIL;
+
 	if (io->value.io.fd) {
-		char data[8192] = {0};
-		if (!fgets(data, 8192, io->value.io.fd)) return NIL;
-		return vstring(data);
+		char *buf = calloc(n+1, sizeof(char));
+		if (!buf) abort("io_read_buf: out of memory");
+
+		if (fread(buf, 1, n, io->value.io.fd) > 0) {
+			res = vstring(buf);
+		}
+		free(buf);
+
 	} else {
-		abort("string io not implemented");
+		char *buf = calloc(n+1, sizeof(char));
+		if (!buf) abort("io_read_buf: out of memory");
+
+		strncpy(buf, io->value.io.data+io->value.io.i, n);
+		io->value.io.len += strlen(buf);
+
+		res = vstring(buf);
+		free(buf);
 	}
-	return NIL;
-}
 
-obj
-iowrite(obj io, obj form)
-{
-	return NIL;
-}
-
-obj
-ioread(obj io)
-{
-	return NIL;
+	return res;
 }
 
 /**  Primitive Operators  ***************************************/
