@@ -16,3 +16,4 @@ sizes
 
 # tests
 *.t
+t/io/writefile1

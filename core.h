@@ -62,6 +62,7 @@
 #define OBJ_FIXNUM       0x03
 #define OBJ_BUILTIN      0x04
 #define OBJ_STRING       0x05
+#define OBJ_IO           0x06
 
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
@@ -89,6 +90,16 @@ struct big_object {
 			char *data;
 		}  string;
 
+		struct {
+			/* string io */
+			size_t len;
+			size_t i;
+			char *data;
+
+			/* standard file io */
+			FILE *fd;
+		} io;
+
 	} value;
 };
 
@@ -101,6 +112,7 @@ struct big_object {
 #define IS_FIXNUM(x)     IS_A(x, FIXNUM)
 #define IS_BUILTIN(x)    IS_A(x, BUILTIN)
 #define IS_STRING(x)     IS_A(x, STRING)
+#define IS_IO(x)         IS_A(x, IO)
 
 #define MAKE_CONSTANT(n) (obj)((n<<TAGGED_BITS)|TAG_CONSTANT)
 #define NIL            MAKE_CONSTANT(0)
@@ -172,6 +184,17 @@ obj vextendc(obj s, char c);
 obj vappend(obj s, const char *cstr);
 obj vformat(obj s, const char *fmt, ...);
 obj vstrcat(obj root, obj add);
+char vchar(obj s, size_t idx);
+
+/* io */
+obj iofd(FILE *file);
+obj iofile(const char *path, const char *mode);
+obj iostring(const char *str, const char *mode);
+obj ioclose(obj io);
+obj iowriteb(obj io, obj str);
+obj ioreadb(obj io, obj n);
+obj iowrite(obj io, obj form);
+obj ioread(obj io);
 
 /* primitive ops */
 obj op_add(obj args);

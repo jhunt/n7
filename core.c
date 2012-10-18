@@ -632,6 +632,99 @@ vstrcat(obj root, obj add)
 	return str;
 }
 
+char
+vchar(obj s, size_t idx)
+{
+	if (idx < 0 || idx >= s->value.string.len) return 0;
+	return s->value.string.data[idx];
+}
+
+/**  IO  ********************************************************/
+
+obj
+iofd(FILE *file)
+{
+	obj io = OBJECT(OBJ_IO, 0);
+	io->value.io.data = NULL;
+	io->value.io.len = io->value.io.i = 0;
+
+	io->value.io.fd = file;
+	return io;
+}
+
+obj
+iofile(const char *path, const char *mode)
+{
+	FILE *fd = fopen(path, mode);
+	return fd ? iofd(fd) : NIL;
+}
+
+obj
+iostring(const char *str, const char *mode)
+{
+	obj io = OBJECT(OBJ_IO, 0);
+	io->value.io.fd = NULL;
+
+	io->value.io.data = strdup(str);
+	io->value.io.len = strlen(str);
+	io->value.io.i = 0;
+	return io;
+}
+
+obj
+ioclose(obj io)
+{
+	/* FIXME: check type of io and str! */
+	if (io->value.io.fd) {
+		fclose(io->value.io.fd);
+		io->value.io.fd = NULL;
+	} else {
+		abort("string io not implemented");
+	}
+
+	return T;
+}
+
+obj
+iowriteb(obj io, obj str)
+{
+	/* FIXME: check type of io and str! */
+	if (io->value.io.fd) {
+		int nc = fprintf(io->value.io.fd, str->value.string.data);
+		if (nc < 0) return NIL;
+		return T;
+	} else {
+		abort("string io not implemented");
+	}
+	return NIL;
+}
+
+obj
+ioreadb(obj io, obj n)
+{
+	/* FIXME: check type of io and str! */
+	if (io->value.io.fd) {
+		char data[8192] = {0};
+		if (!fgets(data, 8192, io->value.io.fd)) return NIL;
+		return vstring(data);
+	} else {
+		abort("string io not implemented");
+	}
+	return NIL;
+}
+
+obj
+iowrite(obj io, obj form)
+{
+	return NIL;
+}
+
+obj
+ioread(obj io)
+{
+	return NIL;
+}
+
 /**  Primitive Operators  ***************************************/
 
 /* FIXME: math operations DON'T handle overflow well */

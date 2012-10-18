@@ -16,6 +16,7 @@ test_isa_type(void)
 		ok(!IS_FIXNUM(x),   "T is not a fixnum");
 		ok(!IS_BUILTIN(x),  "T is not a builtin");
 		ok(!IS_STRING(x),   "T is not a string");
+		ok(!IS_IO(x),       "T is not an io");
 
 		x = NIL;
 		ok(DEF(x),          "NIL is defined");
@@ -25,6 +26,7 @@ test_isa_type(void)
 		ok(!IS_FIXNUM(x),   "NIL is not a fixnum");
 		ok(!IS_BUILTIN(x),  "NIL is not a builtin");
 		ok(!IS_STRING(x),   "NIL is not a string");
+		ok(!IS_IO(x),       "NIL is not an io");
 
 		x = cons(T, NIL);
 		ok(DEF(x),          "(T . NIL) is defined");
@@ -34,6 +36,7 @@ test_isa_type(void)
 		ok(!IS_FIXNUM(x),   "(T . NIL) is not a fixnum");
 		ok(!IS_BUILTIN(x),  "(T . NIL) is not a builtin");
 		ok(!IS_STRING(x),   "(T . NIL) is not a string");
+		ok(!IS_IO(x),       "(T . NIL) is not an io");
 
 		x = fixnum(13);
 		ok(DEF(x),          "13 is defined");
@@ -43,6 +46,7 @@ test_isa_type(void)
 		ok( IS_FIXNUM(x),   "13 is a fixnum");
 		ok(!IS_BUILTIN(x),  "13 is not a builtin");
 		ok(!IS_STRING(x),   "13 is not a string");
+		ok(!IS_IO(x),       "13 is not an io");
 
 		x = intern("A");
 		ok(DEF(x),          "'A is defined");
@@ -52,6 +56,7 @@ test_isa_type(void)
 		ok(!IS_FIXNUM(x),   "'A is not a fixnum");
 		ok(!IS_BUILTIN(x),  "'A is not a builtin");
 		ok(!IS_STRING(x),   "'A is not a string");
+		ok(!IS_IO(x),       "'A is not an io");
 
 		x = vstring("string");
 		ok(DEF(x),          "\"string\" is defined");
@@ -61,6 +66,7 @@ test_isa_type(void)
 		ok(!IS_FIXNUM(x),   "\"string\" is not a fixnum");
 		ok(!IS_BUILTIN(x),  "\"string\" is not a builtin");
 		ok( IS_STRING(x),   "\"string\" is not a string");
+		ok(!IS_IO(x),       "\"string\" is not an io");
 	}
 }
 
