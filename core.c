@@ -243,20 +243,28 @@ read_string(obj io)
 {
 	obj s = str_dupc("");
 	char c;
+	int esc = 0;
 
 again:
-	switch (c = io_getc(io)) {
-		case '"':
-			break;
+	c = io_getc(io);
+	if (c == EOF || (c == '"' && !esc)) return s;
 
-		/* FIXME: handle escape chars in string literals */
+	if (esc) {
+		switch (c) {
+			case 'n': c = '\n'; break;
+			case 'r': c = '\r'; break;
+			case 't': c = '\t'; break;
+			// default: fall-through (\", \', \\)
+		}
 
-		default:
-			strc(s,c);
-			goto again;
+		esc = 0;
+	} else if (c == '\\') {
+		esc = 1;
+		goto again;
 	}
 
-	return s;
+	strc(s,c);
+	goto again;
 }
 
 static obj

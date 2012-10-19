@@ -243,6 +243,26 @@ test_reader_lists(void)
 	}
 }
 
+static void
+test_reader_string_escapes(void)
+{
+	struct {
+		const char *in;
+		const char *out;
+		const char *msg;
+	} tests[] = {
+		{ "\"new\\nline\"", "new\nline", "read understands \\n" },
+		{ 0,0,0 }
+	};
+
+	obj io;
+	int i;
+	for (i = 0; tests[i].in; i++) {
+		io = io_string(tests[i].in);
+		obj_equal(readx(io), str_dupc(tests[i].out), tests[i].msg);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	INIT();
@@ -252,6 +272,8 @@ int main(int argc, char **argv)
 	test_reader();
 	test_read_macros();
 	test_reader_lists();
+
+	test_reader_string_escapes();
 
 	done_testing();
 	return 0;
