@@ -78,7 +78,7 @@ struct big_object {
 		op_fn builtin;
 
 		struct {
-			size_t len;
+			void *reserved; /* for future expansion */
 			char name[];
 		} sym;
 

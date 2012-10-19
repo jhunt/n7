@@ -77,6 +77,17 @@ hash(const char *str, unsigned int lim)
 	return *str % lim;
 }
 
+#define OP_FN(x)    (x)->value.builtin
+#define FNUM(x)     (x)->value.fixnum
+#define CAR(x)      (x)->value.cons.car
+#define CDR(x)      (x)->value.cons.cdr
+#define SYM(x) (x)->value.sym.name
+#define STR_N(s)    (s)->value.string.n
+#define STR_LEN(s)  (s)->value.string.len
+#define STR_VAL(s)  (s)->value.string.data
+#define STR_LEFT(s) (STR_N(s) - STR_LEN(s))
+
+
 obj
 globals(void)
 {
@@ -96,7 +107,7 @@ obj
 builtin(op_fn fn)
 {
 	obj op = OBJECT(OBJ_BUILTIN, 0);
-	op->value.builtin = fn;
+	OP_FN(op) = fn;
 	return op;
 }
 
@@ -114,7 +125,7 @@ eql(obj a, obj b)
 	if (TYPE(a) != TYPE(b)) return NIL;
 
 	if (TYPE(a) == OBJ_FIXNUM) {
-		return a->value.fixnum == b->value.fixnum ? T : NIL;
+		return FNUM(a) == FNUM(b) ? T : NIL;
 	}
 
 	return NIL;
@@ -182,20 +193,20 @@ next_char:
 		case '\t':
 		case '\r':
 		case '\n':
-			if (token->value.string.len > 0) break;
+			if (STR_LEN(token) > 0) break;
 			goto next_char;
 
 		case ';': /* Lisp-style comments */
 			for (c = io_getc(io); c != EOF && c != '\n'; c = io_getc(io))
 				;
-			if (token->value.string.len > 0) break;
+			if (STR_LEN(token) > 0) break;
 			goto next_char;
 
 		case '(':
 		case ')':
 		case '`':
 		case '\'':
-			if (token->value.string.len > 0) {
+			if (STR_LEN(token) > 0) {
 				io_ungetc(io, c);
 				break;
 			}
@@ -207,8 +218,8 @@ next_char:
 			goto next_char;
 	}
 
-	if (token->value.string.len == 0) return NULL;
-	return strdup(token->value.string.data);
+	if (STR_LEN(token) == 0) return NULL;
+	return strdup(STR_VAL(token));
 }
 
 static obj
@@ -370,7 +381,7 @@ vdump_x(obj str, obj what)
 	} else {
 		switch (TYPE(what)) {
 			case OBJ_FIXNUM:
-				strf(str, "%li", what->value.fixnum);
+				strf(str, "%li", FNUM(what));
 				break;
 
 			case OBJ_CONS:
@@ -379,12 +390,12 @@ vdump_x(obj str, obj what)
 				break;
 
 			case OBJ_SYMBOL:
-				strf(str, "%s", what->value.sym.name);
+				strf(str, "%s", SYM(what));
 				break;
 
 			case OBJ_STRING:
 				/* FIXME: need to handle escaped characters... */
-				strf(str, "\"%s\"", what->value.string.data);
+				strf(str, "\"%s\"", STR_VAL(what));
 				break;
 
 			case OBJ_BUILTIN:
@@ -409,15 +420,7 @@ vdump(obj what)
 char*
 cdump(obj what)
 {
-	obj str = vdump(what);
-	return str->value.string.data;
-}
-
-obj
-printx(obj io, obj what)
-{
-	io_write_str(io, vdump(what));
-	return T;
+	return STR_VAL(vdump(what));
 }
 
 /**************************************************/
@@ -426,8 +429,8 @@ obj
 cons(obj car, obj cdr)
 {
 	obj c = OBJECT(OBJ_CONS, 0);
-	c->value.cons.car = car;
-	c->value.cons.cdr = cdr;
+	CAR(c) = car;
+	CDR(c) = cdr;
 	return c;
 }
 
@@ -438,7 +441,7 @@ car(obj cons)
 	if (IS_NIL(cons)) return NIL;
 	if (!IS_CONS(cons)) abort("car() called with non-cons arg");
 
-	return cons->value.cons.car;
+	return CAR(cons);
 }
 
 obj
@@ -448,7 +451,7 @@ cdr(obj cons)
 	if (IS_NIL(cons)) return NIL;
 	if (!IS_CONS(cons)) abort("cdr() called with non-cons arg");
 
-	return cons->value.cons.cdr;
+	return CDR(cons);
 }
 
 obj
@@ -483,7 +486,7 @@ obj
 fixnum(long n)
 {
 	obj fixn = OBJECT(OBJ_FIXNUM, 0);
-	fixn->value.fixnum = n;
+	FNUM(fixn) = n;
 	return fixn;
 }
 
@@ -507,12 +510,11 @@ static obj
 mksym(unsigned int key, const char *name)
 {
 	size_t len = strlen(name)+1;
-	obj S = OBJECT(OBJ_SYMBOL, len);
-	S->value.sym.len = len;
-	strncpy(S->value.sym.name, name, len);
+	obj sym = OBJECT(OBJ_SYMBOL, len);
+	strncpy(SYM(sym), name, len);
 
-	push(SYMBOL_TABLE[key], S);
-	return S;
+	push(SYMBOL_TABLE[key], sym);
+	return sym;
 }
 
 obj
@@ -576,11 +578,6 @@ eval(obj args, obj env)
 }
 
 /**  String Handling  *******************************************/
-
-#define STR_N(s)    (s)->value.string.n
-#define STR_LEN(s)  (s)->value.string.len
-#define STR_VAL(s)  (s)->value.string.data
-#define STR_LEFT(s) (STR_N(s) - STR_LEN(s))
 
 #define STR_BLK(n) ((n) + STR_SEGMENT_SIZE - ((n) % STR_SEGMENT_SIZE))
 
@@ -712,12 +709,12 @@ strx(obj dst, const char *src)
 {
 	if (!IS_STRING(dst)) return;
 
-	size_t d_len = dst->value.string.len;
+	size_t d_len = STR_LEN(dst);
 	size_t s_len = strlen(src);
 
 	str_segm(dst, s_len);
-	strncpy(dst->value.string.data+d_len, src, s_len+1);
-	dst->value.string.len += s_len;
+	strncpy(STR_VAL(dst)+d_len, src, s_len+1);
+	STR_LEN(dst) += s_len;
 }
 
 void
@@ -726,8 +723,8 @@ strc(obj dst, char c)
 	if (!IS_STRING(dst)) return;
 
 	str_segm(dst, 1);
-	dst->value.string.data[dst->value.string.len++] = c;
-	dst->value.string.data[dst->value.string.len] = '\0';
+	STR_VAL(dst)[STR_LEN(dst)++] = c;
+	STR_VAL(dst)[STR_LEN(dst)] = '\0';
 }
 
 void
@@ -846,13 +843,13 @@ io_write_str(obj io, obj str)
 {
 	/* FIXME: check type of io and str! */
 	if (IO_FD(io)) {
-		int nc = fprintf(IO_FD(io), "%s", str->value.string.data);
+		int nc = fprintf(IO_FD(io), "%s", STR_VAL(str));
 		if (nc < 0) return NIL;
 		return T;
 	} else {
 		/* FIXME: io_write_str needs some work */
 		free(IO_STR(io));
-		IO_STR(io) = strdup(str->value.string.data);
+		IO_STR(io) = strdup(STR_VAL(str));
 		io->value.io.len = strlen(IO_STR(io));
 		IO_IDX(io) = io->value.io.len;
 		return T;
@@ -961,7 +958,7 @@ op_apply(obj fn, obj args)
 {
 	if (!fn) abort("fn cannot be NULL");
 	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");
-	return (*(fn->value.builtin))(args);
+	return (*(OP_FN(fn)))(args);
 }
 
 obj
