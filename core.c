@@ -100,6 +100,8 @@ globals(void)
 	e = set(e, intern("eq"),    builtin(op_eq));
 	e = set(e, intern("eql"),   builtin(op_eql));
 	e = set(e, intern("equal"), builtin(op_equal));
+
+	e = set(e, intern("prs"),   builtin(op_prs));
 	return e;
 }
 
@@ -996,4 +998,12 @@ op_equal(obj args)
 	return equal(
 		car(args),
 		car(cdr(args)));
+}
+
+obj
+op_prs(obj args)
+{
+	obj STDOUT = io_fdopen(stdout);
+	io_write_str(STDOUT, car(args));
+	return T;
 }

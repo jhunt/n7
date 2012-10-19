@@ -238,4 +238,6 @@ obj op_eq(obj args);
 obj op_eql(obj args);
 obj op_equal(obj args);
 
+obj op_prs(obj args);
+
 #endif
