@@ -151,6 +151,25 @@ test_reader(void)
 }
 
 static void
+form_eq(const char *got, const char *exp, const char *msg)
+{
+	obj form1, form2;
+
+	form1 = readx(io_string(got));
+	form2 = readx(io_string(exp));
+
+	obj_equal(form1, form2, msg);
+}
+
+static void
+test_read_macros(void)
+{
+	WITH_ABORT_PROTECTION {
+		form_eq("'sym", "(quote sym)", "quote macro");
+	}
+}
+
+static void
 test_reader_lists(void)
 {
 	WITH_ABORT_PROTECTION {
@@ -231,6 +250,7 @@ int main(int argc, char **argv)
 	test_tokenizer();
 	test_token_limits();
 	test_reader();
+	test_read_macros();
 	test_reader_lists();
 
 	done_testing();

@@ -319,6 +319,10 @@ again:
 			val = read_string(io);
 			break;
 
+		case '\'':
+			val = cons(intern("quote"), cons(readx(io), NIL));
+			break;
+
 		default:
 			io_ungetc(io, c);
 			token = next_token(io);
@@ -544,6 +548,10 @@ eval(obj args, obj env)
 	}
 
 	if (IS_CONS(args)) {
+		if (car(args) == intern("quote")) {
+			/* FIXME check args to quote */
+			return car(cdr(args));
+		}
 		obj fn = get(env, car(args));
 		args = cdr(args);
 
