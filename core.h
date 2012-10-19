@@ -14,7 +14,6 @@
   TODO:
 
   LISP ESSENTIALS
-  - io stream support (std*, file, string, etc.)
   - support lambda
   - full reader
   - funcall stack
@@ -144,6 +143,7 @@ unsigned int hash(const char *str, unsigned int lim);
 int type(obj o);
 
 obj globals(void);
+obj builtin(op_fn op);
 
 #if 0
 obj same(obj a, obj b);

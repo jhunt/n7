@@ -77,22 +77,23 @@ hash(const char *str, unsigned int lim)
 	return *str % lim;
 }
 
-static obj
-_builtin(op_fn fn)
-{
-	obj op = OBJECT(OBJ_BUILTIN, 0);
-	op->value.builtin = fn;
-	return op;
-}
-
 obj
 globals(void)
 {
 	obj e = NIL;
-	e = set(e, intern("+"), _builtin(op_add));
-	e = set(e, intern("-"), _builtin(op_sub));
-	e = set(e, intern("*"), _builtin(op_mult));
-	e = set(e, intern("/"), _builtin(op_div));
+	e = set(e, intern("+"), builtin(op_add));
+	e = set(e, intern("-"), builtin(op_sub));
+	e = set(e, intern("*"), builtin(op_mult));
+	e = set(e, intern("/"), builtin(op_div));
+	return e;
+}
+
+obj
+builtin(op_fn fn)
+{
+	obj op = OBJECT(OBJ_BUILTIN, 0);
+	op->value.builtin = fn;
+	return op;
 }
 
 obj
@@ -378,10 +379,13 @@ vdump_x(obj str, obj what)
 				strf(str, "\"%s\"", what->value.string.data);
 				break;
 
-			default:
-				strf(str, "<#%x:%p>", TYPE(what), what);
+			case OBJ_BUILTIN:
+				strf(str, "<#:builtin:%p:#>", what);
 				break;
-				//abort("unprintable object!");
+
+			default:
+				strf(str, "<#:UNKNOWN:%x:%p:#>", TYPE(what), what);
+				break;
 		}
 	}
 }
@@ -540,16 +544,16 @@ eval(obj args, obj env)
 	}
 
 	if (IS_CONS(args)) {
-		obj fn = get(car(args), env);
+		obj fn = get(env, car(args));
 		args = cdr(args);
 
 		/* FIXME: need to handle special forms */
 		obj x;
 		for_list(x, args) {
-			x->value.cons.car = eval(x, env);
+			x->value.cons.car = eval(car(x), env);
 		}
 
-		op_apply(fn, args);
+		return op_apply(fn, args);
 	}
 
 	abort("eval not finished");

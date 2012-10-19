@@ -109,6 +109,9 @@ test_print(void)
 			cons(X, Y));
 		/* odd, but correct... */
 		print_ok(tree, "((a . b) x . y)", "simple tree prints ok");
+
+		/* check to make sure we don't abort */
+		ok(!IS_NIL(vdump(builtin(op_add))), "builtin ops can be printed");
 	}
 }
 
