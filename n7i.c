@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "core.h"
 
+#define print(out,x) io_print(out,vdump(x))
+
 int main(int argc, char **argv)
 {
 	INIT();
@@ -13,7 +15,7 @@ int main(int argc, char **argv)
 	fprintf(stdout, "\n   ..::' n7i '::..\n\n> ");
 
 	while (!feof(stdin)) {
-		io_print(
+		print(
 			out,
 			eval(
 				readx(in),
