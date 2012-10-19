@@ -621,7 +621,7 @@ eval(obj args, obj env)
 			CAR(x) = eval(car(x), env);
 		}
 
-		return op_apply(fn, args);
+		return op_apply(cons(fn, args));
 	}
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
@@ -1000,8 +1000,11 @@ op_div(obj args)
 }
 
 obj
-op_apply(obj fn, obj args)
+op_apply(obj args)
 {
+	obj fn = car(args);
+	args = cdr(args);
+
 	if (!fn) abort("fn cannot be NULL");
 	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");
 	return (*(OP_FN(fn)))(args);
