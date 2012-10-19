@@ -13,6 +13,9 @@ test_eval(void)
 		obj num = fixnum(42);
 		ok(eval(num, env) == num, "(eval 42) self-evaluates");
 
+		obj str = str_dupc("test");
+		ok(eval(str, env) == str, "(eval \"test\") self-evaluates");
+
 		obj sym = intern("x");
 		env = set(env, sym, fixnum(42));
 		ok(IS_T(eql(eval(sym, env), fixnum(42))), "(eval x) causes symbol lookup");

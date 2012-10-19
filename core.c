@@ -85,6 +85,10 @@ globals(void)
 	e = set(e, intern("-"), builtin(op_sub));
 	e = set(e, intern("*"), builtin(op_mult));
 	e = set(e, intern("/"), builtin(op_div));
+
+	e = set(e, intern("eq"),    builtin(op_eq));
+	e = set(e, intern("eql"),   builtin(op_eql));
+	e = set(e, intern("equal"), builtin(op_equal));
 	return e;
 }
 
@@ -539,7 +543,10 @@ eval(obj args, obj env)
 	/* self-evaluating stuff */
 	if (IS_NIL(args)) return NIL;
 	if (IS_T(args)) return T;
+
 	if (IS_FIXNUM(args)) return args;
+	if (IS_STRING(args)) return args;
+	//if (IS_IO(args))     return args;
 
 	/* symbol lookup */
 	if (IS_SYMBOL(args)) {
@@ -564,6 +571,7 @@ eval(obj args, obj env)
 		return op_apply(fn, args);
 	}
 
+	fprintf(stderr, "  can't eval %s\n", cdump(args));
 	abort("eval not finished");
 }
 
@@ -954,6 +962,33 @@ op_apply(obj fn, obj args)
 	if (!fn) abort("fn cannot be NULL");
 	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");
 	return (*(fn->value.builtin))(args);
+}
+
+obj
+op_eq(obj args)
+{
+	/* FIXME: check arity */
+	return eq(
+		car(args),
+		car(cdr(args)));
+}
+
+obj
+op_eql(obj args)
+{
+	/* FIXME: check arity */
+	return eql(
+		car(args),
+		car(cdr(args)));
+}
+
+obj
+op_equal(obj args)
+{
+	/* FIXME: check arity */
+	return equal(
+		car(args),
+		car(cdr(args)));
 }
 
 /**  Debugging Functions  ***************************************/

@@ -231,6 +231,10 @@ obj op_mult(obj args);
 obj op_div(obj args);
 obj op_apply(obj fn, obj args);
 
+obj op_eq(obj args);
+obj op_eql(obj args);
+obj op_equal(obj args);
+
 /* debugging; superceded by vdump / printx and friends */
 #if 0
 void dump_obj(const char *tag, obj o);
