@@ -18,6 +18,7 @@
   - funcall stack
   - map out core operators
      [x]  QUOTE
+     [ ]  SET
      [ ]  IF
      [x]  DO (PROGN)
      [ ]  WITH (LET, LET* and friends)
