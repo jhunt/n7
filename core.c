@@ -115,6 +115,10 @@ globals(void)
 	e = set(e, intern("cdr"),   builtin(op_cdr));
 
 	e = set(e, intern("prs"),   builtin(op_prs));
+
+	e = set(e, intern("call"),  builtin(op_call));
+	e = set(e, intern("apply"), builtin(op_apply));
+
 	return e;
 }
 
@@ -581,17 +585,18 @@ eval(obj args, obj env)
 
 	if (IS_CONS(args)) {
 		obj fn = car(args);
+		args = cdr(args);
 
 		/* handle special forms like QUOTE and DO */
 
 		/* (quote x) -> x */
 		if (fn == intern("quote")) {
 			/* FIXME check args to quote */
-			return car(cdr(args));
+			return car(args);
 
 		/* (do x y z) -> eval all, return last */
 		} else if (fn == intern("do")) {
-			obj x, result;
+			obj x, result = NIL;
 			for_list(x, args) {
 				result = eval(car(x), env);
 			}
@@ -600,7 +605,6 @@ eval(obj args, obj env)
 		/* (if cond (then) (else)) -> do the right thing */
 		} else if (fn == intern("if")) {
 			/* check arity, should be 3 (if (test) (then-do) (else)) */
-			args = cdr(args); // skip the symbol
 			obj test = car(args);
 			args = cdr(args);
 
@@ -613,15 +617,11 @@ eval(obj args, obj env)
 		}
 
 		/* normal function application */
-		fn = get(env, car(args));
-		args = cdr(args);
-
 		obj x;
 		for_list(x, args) {
 			CAR(x) = eval(car(x), env);
 		}
-
-		return op_apply(cons(fn, args));
+		return op_call(cons(eval(fn, env), args));
 	}
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
@@ -1000,10 +1000,16 @@ op_div(obj args)
 }
 
 obj
+op_call(obj args)
+{
+	return op_apply(nlist(2, car(args), cdr(args)));
+}
+
+obj
 op_apply(obj args)
 {
 	obj fn = car(args);
-	args = cdr(args);
+	args = car(cdr(args));
 
 	if (!fn) abort("fn cannot be NULL");
 	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");

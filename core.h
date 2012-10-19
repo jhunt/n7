@@ -22,6 +22,7 @@
      [x]  IF
      [x]  DO (PROGN)
      [ ]  LAMBDA
+     [X]  CALL/APPLY
      [X]  CONS
      [X]  CAR
      [X]  CDR
@@ -237,6 +238,7 @@ obj op_add(obj args);
 obj op_sub(obj args);
 obj op_mult(obj args);
 obj op_div(obj args);
+obj op_call(obj args);
 obj op_apply(obj args);
 
 obj op_eq(obj args);

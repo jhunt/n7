@@ -79,6 +79,9 @@ test_core_ops(void)
 		ok_eval("(cdr (cons 'x 'y))", y, "(cdr (cons 'x 'y)) -> y");
 		ok_eval("(car nil)", NIL, "(car nil) -> nil");
 		ok_eval("(cdr nil)", NIL, "(cdr nil) -> nil");
+
+		ok_eval("(apply + '(1 2 3 4))", fixnum(10), "(apply '+ '(1 2 3 4)) -> 10");
+		ok_eval("(call + 1 2 3 4)", fixnum(10), "(call '+ 1 2 3 4) -> 10");
 	}
 }
 

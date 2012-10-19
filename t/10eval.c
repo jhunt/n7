@@ -35,26 +35,26 @@ test_apply(void)
 		PLUS->type = OBJ_BUILTIN;
 		PLUS->value.builtin = op_add;
 
-		fixnum_is(op_apply(cons(PLUS, args)), 1111, "op_add via op_apply");
+		fixnum_is(op_call(cons(PLUS, args)), 1111, "op_add via op_call");
 	}
 
 	jmp_buf comeback;
 	on_abort(&comeback);
 
 	if (setjmp(comeback) == 0) {
-		op_apply(NULL);
-		fail("op_apply(NULL) should abort");
-		diag("op_apply(NULL) did not abort");
+		op_call(NULL);
+		fail("op_call(NULL) should abort");
+		diag("op_call(NULL) did not abort");
 	} else {
-		pass("op_apply(NULL) should abort");
+		pass("op_call(NULL) should abort");
 	}
 
 	if (setjmp(comeback) == 0) {
-		op_apply(args);
-		fail("op_apply( ... not an fn ... ) should abort");
-		diag("op_apply() did not abort when first arg was not a fn");
+		op_call(args);
+		fail("op_call( ... not an fn ... ) should abort");
+		diag("op_call() did not abort when first arg was not a fn");
 	} else {
-		pass("op_apply( ... not an fn ... ) should abort");
+		pass("op_call( ... not an fn ... ) should abort");
 	}
 }
 
