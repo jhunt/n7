@@ -163,7 +163,6 @@ obj set(obj env, obj sym, obj val);
 
 /* read... */
 obj readx(obj io);
-obj printx(obj io, obj what);
 obj vdump(obj what);
 char* cdump(obj what);
 
@@ -218,6 +217,7 @@ obj io_read_delim(obj io, obj delims, int incl_delim);
 
 /* io - write a single vstring */
 obj io_write_str(obj io, obj str);
+#define io_print(io,s) io_write_str(io,s)
 
 /* io - read/write binary segments */
 obj io_read_buf(obj io, size_t n);

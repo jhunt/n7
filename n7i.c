@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	fprintf(stdout, "\n   ..::' n7i '::..\n\n> ");
 
 	while (!feof(stdin)) {
-		printx(
+		io_print(
 			out,
 			eval(
 				readx(in),
