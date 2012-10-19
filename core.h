@@ -159,8 +159,8 @@ obj get(obj env, obj sym);
 obj set(obj env, obj sym, obj val);
 
 /* read... */
-obj readx(FILE *io);
-obj printx(FILE *io, obj what);
+obj readx(obj io);
+obj printx(obj io, obj what);
 obj vdump(obj what);
 char* cdump(obj what);
 
@@ -207,6 +207,7 @@ obj io_close(obj io);
 
 /* io - read/write a single character */
 char io_getc(obj io);
+char io_ungetc(obj io, char c);
 char io_putc(obj io, char c);
 
 /* io - read delimited input */

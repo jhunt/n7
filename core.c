@@ -163,13 +163,13 @@ set(obj env, obj sym, obj val)
 /**************************************************/
 
 char*
-next_token(FILE *io)
+next_token(obj io)
 {
 
 	obj token = str_dupc("");
 	char c;
 next_char:
-	switch (c = fgetc(io)) {
+	switch (c = io_getc(io)) {
 		case EOF:
 			break;
 
@@ -181,7 +181,7 @@ next_char:
 			goto next_char;
 
 		case ';': /* Lisp-style comments */
-			for (c = fgetc(io); c != EOF && c != '\n'; c = fgetc(io))
+			for (c = io_getc(io); c != EOF && c != '\n'; c = io_getc(io))
 				;
 			if (token->value.string.len > 0) break;
 			goto next_char;
@@ -191,7 +191,7 @@ next_char:
 		case '`':
 		case '\'':
 			if (token->value.string.len > 0) {
-				ungetc(c, io);
+				io_ungetc(io, c);
 				break;
 			}
 			strc(token, c);
@@ -221,13 +221,13 @@ read_number(const char *token)
 #define READ_STRING_MAX 100
 
 static obj
-read_string(FILE *io)
+read_string(obj io)
 {
 	obj s = str_dupc("");
 	char c;
 
 again:
-	switch (c = fgetc(io)) {
+	switch (c = io_getc(io)) {
 		case '"':
 			break;
 
@@ -242,7 +242,7 @@ again:
 }
 
 static obj
-read_list(FILE *io)
+read_list(obj io)
 {
 	size_t nread = 1;
 	obj first, next, rest;
@@ -269,7 +269,7 @@ read_list(FILE *io)
 }
 
 obj
-readx(FILE *io)
+readx(obj io)
 {
 	char *token, c;
 	obj val;
@@ -277,7 +277,7 @@ readx(FILE *io)
 	token = NULL;
 
 again:
-	switch (c = fgetc(io)) {
+	switch (c = io_getc(io)) {
 		case EOF:
 			return NIL;
 
@@ -297,7 +297,7 @@ again:
 		case '7':
 		case '8':
 		case '9':
-			ungetc(c, io);
+			io_ungetc(io, c);
 			token = next_token(io);
 			val = read_number(token);
 			break;
@@ -319,7 +319,7 @@ again:
 			break;
 
 		default:
-			ungetc(c, io);
+			io_ungetc(io, c);
 			token = next_token(io);
 			val = intern(token);
 			break;
@@ -402,10 +402,9 @@ cdump(obj what)
 }
 
 obj
-printx(FILE *io, obj what)
+printx(obj io, obj what)
 {
-	obj rep = vdump(what);
-	fprintf(io, "%s", rep->value.string.data);
+	io_write_str(io, vdump(what));
 	return T;
 }
 
@@ -734,14 +733,19 @@ strf(obj dst, const char *fmt, ...)
 
 /**  IO  ********************************************************/
 
+#define IO_FD(io)   (io)->value.io.fd
+
+#define IO_IDX(io)  (io)->value.io.i
+#define IO_STR(io)  (io)->value.io.data
+
 obj
 io_fdopen(FILE *file)
 {
 	obj io = OBJECT(OBJ_IO, 0);
-	io->value.io.data = NULL;
-	io->value.io.len = io->value.io.i = 0;
+	IO_STR(io) = NULL;
+	io->value.io.len = IO_IDX(io) = 0;
 
-	io->value.io.fd = file;
+	IO_FD(io) = file;
 	return io;
 }
 
@@ -756,11 +760,11 @@ obj
 io_string(const char *str)
 {
 	obj io = OBJECT(OBJ_IO, 0);
-	io->value.io.fd = NULL;
+	IO_FD(io) = NULL;
 
-	io->value.io.data = strdup(str);
+	IO_STR(io) = strdup(str);
 	io->value.io.len = strlen(str);
-	io->value.io.i = 0;
+	IO_IDX(io) = 0;
 	return io;
 }
 
@@ -768,10 +772,10 @@ void
 io_rewind(obj io)
 {
 	/* FIXME: check type of io and str! */
-	if (io->value.io.fd) {
-		fseek(io->value.io.fd, 0, SEEK_SET);
+	if (IO_FD(io)) {
+		fseek(IO_FD(io), 0, SEEK_SET);
 	} else {
-		io->value.io.i = 0;
+		IO_IDX(io) = 0;
 	}
 }
 
@@ -779,9 +783,9 @@ obj
 io_close(obj io)
 {
 	/* FIXME: check type of io and str! */
-	if (io->value.io.fd) {
-		fclose(io->value.io.fd);
-		io->value.io.fd = NULL;
+	if (IO_FD(io)) {
+		fclose(IO_FD(io));
+		IO_FD(io) = NULL;
 	}
 
 	return T;
@@ -791,11 +795,27 @@ char
 io_getc(obj io)
 {
 	/* FIXME: check type of io and str! */
-	if (io->value.io.fd) {
-		return fgetc(io->value.io.fd);
+	if (IO_FD(io)) {
+		return fgetc(IO_FD(io));
 	} else {
-		if (io->value.io.i >= io->value.io.len) return EOF;
-		return io->value.io.data[io->value.io.i++];
+		if (IO_IDX(io) >= io->value.io.len) return EOF;
+		return IO_STR(io)[IO_IDX(io)++];
+	}
+
+	return EOF;
+}
+
+char
+io_ungetc(obj io, char c)
+{
+	/* FIXME: check type of io and str! */
+	if (IO_FD(io)) {
+		return ungetc(c, IO_FD(io));
+	} else {
+		if (IO_IDX(io) > 0) {
+			IO_STR(io)[--IO_IDX(io)] = c;
+			return c;
+		}
 	}
 
 	return EOF;
@@ -805,16 +825,16 @@ obj
 io_write_str(obj io, obj str)
 {
 	/* FIXME: check type of io and str! */
-	if (io->value.io.fd) {
-		int nc = fprintf(io->value.io.fd, "%s", str->value.string.data);
+	if (IO_FD(io)) {
+		int nc = fprintf(IO_FD(io), "%s", str->value.string.data);
 		if (nc < 0) return NIL;
 		return T;
 	} else {
 		/* FIXME: io_write_str needs some work */
-		free(io->value.io.data);
-		io->value.io.data = strdup(str->value.string.data);
-		io->value.io.len = strlen(io->value.io.data);
-		io->value.io.i = io->value.io.len;
+		free(IO_STR(io));
+		IO_STR(io) = strdup(str->value.string.data);
+		io->value.io.len = strlen(IO_STR(io));
+		IO_IDX(io) = io->value.io.len;
 		return T;
 	}
 	return NIL;
@@ -829,14 +849,14 @@ io_read_buf(obj io, size_t n)
 	char *buf = calloc(n+1, sizeof(char));
 	if (!buf) ABORT_OOM("io_read_buf"); /* LCOV_EXCL_LINE */
 
-	if (io->value.io.fd) {
-		if (fread(buf, 1, n, io->value.io.fd) > 0) {
+	if (IO_FD(io)) {
+		if (fread(buf, 1, n, IO_FD(io)) > 0) {
 			res = str_dupc(buf);
 		}
 		free(buf);
 
 	} else {
-		strncpy(buf, io->value.io.data+io->value.io.i, n);
+		strncpy(buf, IO_STR(io)+IO_IDX(io), n);
 		io->value.io.len += strlen(buf);
 
 		res = str_dupc(buf);
