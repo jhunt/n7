@@ -11,8 +11,7 @@ LCOV := lcov --directory . --base-directory .
 GENHTML := genhtml --prefix $(shell dirname `pwd`)
 
 TEST_FILES := $(shell find t -name '*.c' | grep -v 'assert.c' | sort | sed -e 's/.c$$/.t/')
-BINARIES := repl syms sizes n7i
-
+BINARIES := n7i
 
 all: test $(BINARIES)
 
@@ -34,16 +33,14 @@ coverage:
 fixme:
 	find . -name '*.[ch]' | xargs grep -in --color FIXME:
 
-n7i: n7i.o core.o
-repl: repl.o core.o
-syms: syms.o core.o
-
 clean:
 	find . -name '*.o' | xargs -r rm -f
 	find . -name '*.gc??' | xargs -r rm -f
 	rm -f t/*.t
 	rm -rf doc/coverage
-	rm -f repl sizes
+	rm -f $(BINARIES)
+
+n7i: n7i.o core.o
 
 t/%.t: t/%.o core.o t/assert.o t/test.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< core.o t/assert.o

@@ -11,9 +11,6 @@ doc/coverage
 
 # binaries
 n7i
-repl
-syms
-sizes
 
 # tests
 *.t
