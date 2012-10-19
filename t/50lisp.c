@@ -1,12 +1,14 @@
 #include "assert.h"
 
+static obj ENV = NIL;
+
 static void
-ok_eval(const char *code, obj expect, obj env, const char *msg)
+ok_eval(const char *code, obj expect, const char *msg)
 {
 	obj io = io_string(code);
 	obj form = readx(io);
 
-	obj result = eval(form, env);
+	obj result = eval(form, ENV);
 	if (IS_T(equal(result, expect))) {
 		pass(msg);
 		return;
@@ -25,11 +27,11 @@ static void
 test_math(void)
 {
 	WITH_ABORT_PROTECTION {
-		obj env = globals();
+		ENV = globals();
 
-		ok_eval("(+ 4 5)", fixnum(9), env, "(+ 4 5) -> 9");
+		ok_eval("(+ 4 5)", fixnum(9), "(+ 4 5) -> 9");
 
-		ok_eval("(+ 4 5 (* 9 2) (- 18) 1)", fixnum(10), env,
+		ok_eval("(+ 4 5 (* 9 2) (- 18) 1)", fixnum(10),
 				"(+ 4 5 (* 9 2) (- 18) 1) -> 10");
 	}
 }
@@ -38,18 +40,28 @@ static void
 test_special_ops(void)
 {
 	WITH_ABORT_PROTECTION {
-		obj env = globals();
+		ENV = globals();
 
-		ok_eval("(quote 1)", fixnum(1), env, "'1 -> 1");
+		ok_eval("(quote nil)", NIL, "'nil -> nil");
+		ok_eval("(quote)", NIL, "(quote) -> nil");
+		ok_eval("(quote 1)", fixnum(1), "'1 -> 1");
 		ok_eval("(quote (1 2 3))",
-				cons(fixnum(1), cons(fixnum(2), cons(fixnum(3), NIL))),
-				env,
+				nlist(3, fixnum(1), fixnum(2), fixnum(3)),
 				"'(1 2 3) -> (1 2 3)");
 
 
-		ok_eval("(do 1)", fixnum(1), env, "(do 1) -> 1");
-		ok_eval("(do 1 2 3)", fixnum(3), env, "(do 1 2 3) -> 3");
-		ok_eval("(do t nil (+ 1 1))", fixnum(2), env, "(do t nil (+ 1 1)) -> 2");
+		ok_eval("(do)", NIL, "(do) -> nil");
+		ok_eval("(do 1)", fixnum(1), "(do 1) -> 1");
+		ok_eval("(do 1 2 3)", fixnum(3), "(do 1 2 3) -> 3");
+		ok_eval("(do t nil (+ 1 1))", fixnum(2), "(do t nil (+ 1 1)) -> 2");
+
+
+		ok_eval("(if t 'then 'else)", intern("then"), "(if t 'then 'else) -> 'then");
+		ok_eval("(if nil 'then 'else)", intern("else"), "(if nil 'then 'else) -> 'else");
+		ok_eval("(if t 'then)", intern("then"), "(if t 'then) -> 'then");
+		ok_eval("(if nil 'then)", NIL, "(if nil 'then) -> nil");
+		ok_eval("(if t)", NIL, "(if t) -> nil");
+		ok_eval("(if nil)", NIL, "(if nil) -> nil");
 	};
 }
 
@@ -57,16 +69,16 @@ static void
 test_equality(void)
 {
 	WITH_ABORT_PROTECTION {
-		obj env = globals();
+		ENV = globals();
 
-		ok_eval("(eq 'A 'A)", T,   env, "basic symbol equality");
-		ok_eval("(eq 'A 'B)", NIL, env, "basic symbol inequality");
+		ok_eval("(eq 'A 'A)", T,   "basic symbol equality");
+		ok_eval("(eq 'A 'B)", NIL, "basic symbol inequality");
 
-		ok_eval("(eql 1 1)", T,   env, "basic fixnum equality");
-		ok_eval("(eql 2 4)", NIL, env, "basic fixnum inequality");
+		ok_eval("(eql 1 1)", T,   "basic fixnum equality");
+		ok_eval("(eql 2 4)", NIL, "basic fixnum inequality");
 
-		ok_eval("(equal \"s1\" \"s1\")", T,   env, "basic string equality");
-		ok_eval("(equal \"s1\" \"s2\")", NIL, env, "basic string inequality");
+		ok_eval("(equal \"s1\" \"s1\")", T,   "basic string equality");
+		ok_eval("(equal \"s1\" \"s2\")", NIL, "basic string inequality");
 	}
 }
 

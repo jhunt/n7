@@ -579,15 +579,33 @@ eval(obj args, obj env)
 		obj fn = car(args);
 
 		/* handle special forms like QUOTE and DO */
+
+		/* (quote x) -> x */
 		if (fn == intern("quote")) {
 			/* FIXME check args to quote */
 			return car(cdr(args));
+
+		/* (do x y z) -> eval all, return last */
 		} else if (fn == intern("do")) {
 			obj x, result;
 			for_list(x, args) {
 				result = eval(car(x), env);
 			}
 			return result;
+
+		/* (if cond (then) (else)) -> do the right thing */
+		} else if (fn == intern("if")) {
+			/* check arity, should be 3 (if (test) (then-do) (else)) */
+			args = cdr(args); // skip the symbol
+			obj test = car(args);
+			args = cdr(args);
+
+			if (IS_T(eval(test, env))) {
+				return eval(car(args), env);
+			}
+
+			args = cdr(args);
+			return eval(car(args), env);
 		}
 
 		/* normal function application */

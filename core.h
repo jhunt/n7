@@ -19,8 +19,12 @@
   - map out core operators
      [x]  QUOTE
      [ ]  SET
-     [ ]  IF
+     [x]  IF
      [x]  DO (PROGN)
+     [ ]  LAMBDA
+     [ ]  CONS
+     [ ]  CAR
+     [ ]  CDR
      [ ]  WITH (LET, LET* and friends)
 
   DATA TYPES
