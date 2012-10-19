@@ -558,6 +558,42 @@ eval(obj args, obj env)
 
 /**  String Handling  *******************************************/
 
+#define STR_N(s)    (s)->value.string.n
+#define STR_LEN(s)  (s)->value.string.len
+#define STR_VAL(s)  (s)->value.string.data
+#define STR_LEFT(s) (STR_N(s) - STR_LEN(s))
+
+#define STR_BLK(n) ((n) + STR_SEGMENT_SIZE - ((n) % STR_SEGMENT_SIZE))
+
+static void
+str_segm(obj s, size_t plus)
+{
+	if (STR_LEFT(s) > plus) return;
+
+#if 0
+	if (STR_VAL(s)) {
+		fprintf(stderr, "STR_SEGM:grow %p from %lu/%lu to %lu/%lu\n",
+				STR_VAL(s),
+				STR_LEN(s), STR_N(s),
+				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
+	} else {
+		fprintf(stderr, "STR_SEGM:init %p to %lu/%lu\n",
+				STR_VAL(s),
+				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
+	}
+#endif
+
+	size_t l = STR_N(s) + STR_BLK(plus);
+	char *re = realloc(STR_VAL(s), l+1);
+	if (!re) ABORT_OOM("str_segm"); /* LCOV_EXCL_LINE */
+
+	STR_N(s) = l;
+	STR_VAL(s) = re;
+
+	/* put a null-terminator at len+plus */
+	STR_VAL(s)[STR_LEN(s)+plus] = '\0';
+}
+
 obj
 str_dup(obj s)
 {
@@ -568,10 +604,7 @@ obj
 str_dupc(const char *c)
 {
 	if (!c) return NIL;
-	obj s = OBJECT(OBJ_STRING, 0);
-	s->value.string.len = strlen(c);
-	s->value.string.data = strdup(c);
-	return s;
+	return str_dupb(c, strlen(c));
 }
 
 obj
@@ -579,10 +612,10 @@ str_dupb(const char *buf, size_t len)
 {
 	if (!buf) return NIL;
 	obj s = OBJECT(OBJ_STRING, 0);
-	s->value.string.len = len;
-	s->value.string.data = calloc(len+1, sizeof(char));
-	if (!s->value.string.data) ABORT_OOM("str_dupb"); /* LCOV_EXCL_LINE */
-	memcpy(s->value.string.data, buf, len);
+
+	str_segm(s, len);
+	memcpy(STR_VAL(s), buf, len);
+	STR_LEN(s) = len;
 	return s;
 }
 
@@ -594,16 +627,14 @@ str_dupf(const char *fmt, ...)
 	size_t len = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
 
-	char *buf = calloc(len+1, sizeof(char));
-	if (!buf) ABORT_OOM("str_dupf"); /* LCOV_EXCL_LINE */
+	obj s = OBJECT(OBJ_STRING, 0);
+	str_segm(s, len);
 
 	va_start(ap, fmt);
-	vsnprintf(buf, len+1, fmt, ap);
+	vsnprintf(STR_VAL(s), len+1, fmt, ap);
+	STR_LEN(s) = len;
 	va_end(ap);
 
-	obj s = OBJECT(OBJ_STRING, 0);
-	s->value.string.len = len;
-	s->value.string.data = buf;
 	return s;
 }
 
@@ -611,9 +642,7 @@ obj
 str_cat(obj dst, obj src)
 {
 	if (!IS_STRING(dst) || !IS_STRING(src)) return NIL;
-	return str_dupf("%s%s",
-			dst->value.string.data,
-			src->value.string.data);
+	return str_dupf("%s%s", STR_VAL(dst), STR_VAL(src));
 }
 
 obj
@@ -621,9 +650,7 @@ str_catc(obj dst, const char *src)
 {
 	if (!IS_STRING(dst)) return NIL;
 	if (!src) return str_dup(dst);
-	return str_dupf("%s%s",
-			dst->value.string.data,
-			src);
+	return str_dupf("%s%s", STR_VAL(dst), src);
 }
 
 obj
@@ -658,39 +685,30 @@ char*
 cstr(obj s)
 {
 	if (!IS_STRING(s)) return NULL;
-	return s->value.string.data;
+	return STR_VAL(s);
 }
 
 void
 strx(obj dst, const char *src)
 {
 	if (!IS_STRING(dst)) return;
+
 	size_t d_len = dst->value.string.len;
 	size_t s_len = strlen(src);
-	size_t l = d_len + s_len;
 
-	char *re = realloc(dst->value.string.data, l+1);
-	if (!re) abort("strx: out of memory");
-
-	strncpy(re+d_len, src, s_len+1);
-	dst->value.string.len = l;
-	dst->value.string.data = re;
+	str_segm(dst, s_len);
+	strncpy(dst->value.string.data+d_len, src, s_len+1);
+	dst->value.string.len += s_len;
 }
 
 void
 strc(obj dst, char c)
 {
 	if (!IS_STRING(dst)) return;
-	size_t d_len = dst->value.string.len;
 
-	char *re = realloc(dst->value.string.data, d_len+1+1);
-	if (!re) abort("strx: out of memory");
-
-	*(re+d_len) = c;
-	*(re+d_len+1) = '\0';
-
-	dst->value.string.len++;
-	dst->value.string.data = re;
+	str_segm(dst, 1);
+	dst->value.string.data[dst->value.string.len++] = c;
+	dst->value.string.data[dst->value.string.len] = '\0';
 }
 
 void

@@ -114,6 +114,28 @@ test_list_op_aborts(void)
 	} else {
 		pass("(cdr 'SYM) should abort");
 	}
+
+	/* car(T) */
+	if (setjmp(comeback) == 0) {
+		on_abort(&comeback);
+
+		car(T);
+		diag("(car T) did not abort");
+		fail("(car T) should abort");
+	} else {
+		pass("(car T) should abort");
+	}
+
+	/* cdr(T) */
+	if (setjmp(comeback) == 0) {
+		on_abort(&comeback);
+
+		cdr(T);
+		diag("(cdr T) did not abort");
+		fail("(cdr T) should abort");
+	} else {
+		pass("(cdr T) should abort");
+	}
 }
 
 static inline void
@@ -164,6 +186,8 @@ test_str_dups(void)
 	obj z = str_dup(x);
 	obj_equal(x,z, "str_dup(obj) == str_dup(obj)");
 
+	ok(IS_NIL(str_dupb(NULL, 0)), "str_dupb handles NULL buffer");
+
 	const char *buf = "hello, world";
 	x = str_dupb(buf, 5);
 	y = str_dupc("hello");
@@ -187,9 +211,10 @@ test_str_cats(void)
 
 	/** str_cat **/
 
-	ok(IS_NIL(str_cat(NIL, NIL)), "str_cat(nil,nil) == NIL");
-	ok(IS_NIL(str_cat(fixnum(4), world)), "str_cat(4,str) == NIL");
-	ok(IS_NIL(str_cat(hello, intern("sym"))), "str_cat(str,'sym) == NIL");
+	ok(IS_NIL(str_cat(NIL,       NIL)),           "str_cat(nil,nil) == NIL");
+	ok(IS_NIL(str_cat(fixnum(4), fixnum(2))),     "str_cat(4,2) == NIL");
+	ok(IS_NIL(str_cat(hello,     NIL)),           "str_cat(str,NIL) == NIL");
+	ok(IS_NIL(str_cat(hello,     intern("sym"))), "str_cat(str,'sym) == NIL");
 
 	combined = str_cat(hello, world);
 	ok(combined != hello, "str_cat returns new pointer (not arg1)");
@@ -230,7 +255,8 @@ test_str_cats(void)
 
 	/** str_catf **/
 
-	ok(IS_NIL(str_catf(fixnum(9), "%d", 99)), "str_catf with non-string dst returns NIL");
+	ok(IS_NIL(str_catf(fixnum(9), "%d", 99)), "str_catf with non-string dst 9 returns NIL");
+	ok(IS_NIL(str_catf(T, "%s", "true")),     "str_catf with non-string dst T returns NIL");
 
 	combined = str_catf(start, "%s, %d", buf+3+1+4+1, 42);
 	ok(combined != start, "str_catf returns new pointer (not arg1)");
@@ -250,6 +276,24 @@ test_str_utils(void)
 
 	strf(hello, " -- %lu", 1337);
 	obj_equal(hello, str_dupc("Hello, World! -- 1337"), "strf appends with style");
+
+	strx(NIL, "test");
+	pass("strx(NIL,str) does not crash");
+
+	strx(fixnum(6), "test");
+	pass("strx(6,str) does not crash");
+
+	strc(NIL, '?');
+	pass("strc(NIL,c) does not crash");
+
+	strc(intern("SYM"), '%');
+	pass("strc('SYM,c) does not crash");
+
+	strf(NIL, "%s", "never fails");
+	pass("strf(NIL, ...) does not crash");
+
+	strf(fixnum(67), ".%d", 89);
+	pass("strf(67, ...) does not crash");
 }
 
 /***********************************************************/

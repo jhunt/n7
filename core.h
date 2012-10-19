@@ -86,7 +86,8 @@ struct big_object {
 		} cons;
 
 		struct {
-			size_t len;
+			size_t n;   /* length of buffer */
+			size_t len; /* length of string */
 			char *data;
 		}  string;
 
@@ -131,6 +132,10 @@ struct big_object {
 void on_abort(jmp_buf *jmp);
 void _abort(const char *file, unsigned int line, const char *msg);
 #define abort(m) _abort(__FILE__, __LINE__, (m))
+
+/**************************************************/
+
+#define STR_SEGMENT_SIZE 32
 
 /**************************************************/
 
