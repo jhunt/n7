@@ -110,6 +110,10 @@ globals(void)
 	e = set(e, intern("eql"),   builtin(op_eql));
 	e = set(e, intern("equal"), builtin(op_equal));
 
+	e = set(e, intern("cons"),  builtin(op_cons));
+	e = set(e, intern("car"),   builtin(op_car));
+	e = set(e, intern("cdr"),   builtin(op_cdr));
+
 	e = set(e, intern("prs"),   builtin(op_prs));
 	return e;
 }
@@ -1028,6 +1032,27 @@ op_equal(obj args)
 	return equal(
 		car(args),
 		car(cdr(args)));
+}
+
+obj
+op_cons(obj args)
+{
+	/* FIXME: check arity */
+	return cons(car(args), car(cdr(args)));
+}
+
+obj
+op_car(obj args)
+{
+	/* FIXME: check arity */
+	return car(car(args));
+}
+
+obj
+op_cdr(obj args)
+{
+	/* FIXME: check arity */
+	return cdr(car(args));
 }
 
 obj

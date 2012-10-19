@@ -62,7 +62,24 @@ test_special_ops(void)
 		ok_eval("(if nil 'then)", NIL, "(if nil 'then) -> nil");
 		ok_eval("(if t)", NIL, "(if t) -> nil");
 		ok_eval("(if nil)", NIL, "(if nil) -> nil");
-	};
+	}
+}
+
+static void
+test_core_ops(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+
+		obj x = intern("X");
+		obj y = intern("Y");
+
+		ok_eval("(cons 'x 'y)", cons(x,y), "(cons x y) works");
+		ok_eval("(car (cons 'x 'y))", x, "(car (cons 'x 'y)) -> x");
+		ok_eval("(cdr (cons 'x 'y))", y, "(cdr (cons 'x 'y)) -> y");
+		ok_eval("(car nil)", NIL, "(car nil) -> nil");
+		ok_eval("(cdr nil)", NIL, "(cdr nil) -> nil");
+	}
 }
 
 static void
@@ -89,6 +106,7 @@ int main(int argc, char **argv)
 	test_math();
 	test_equality();
 	test_special_ops();
+	test_core_ops();
 
 	done_testing();
 	return 0;

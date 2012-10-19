@@ -22,9 +22,9 @@
      [x]  IF
      [x]  DO (PROGN)
      [ ]  LAMBDA
-     [ ]  CONS
-     [ ]  CAR
-     [ ]  CDR
+     [X]  CONS
+     [X]  CAR
+     [X]  CDR
      [ ]  WITH (LET, LET* and friends)
 
   DATA TYPES
@@ -242,6 +242,10 @@ obj op_apply(obj fn, obj args);
 obj op_eq(obj args);
 obj op_eql(obj args);
 obj op_equal(obj args);
+
+obj op_cons(obj args);
+obj op_car(obj args);
+obj op_cdr(obj args);
 
 obj op_prs(obj args);
 
