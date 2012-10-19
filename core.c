@@ -557,17 +557,27 @@ eval(obj args, obj env)
 	}
 
 	if (IS_CONS(args)) {
-		if (car(args) == intern("quote")) {
+		obj fn = car(args);
+
+		/* handle special forms like QUOTE and DO */
+		if (fn == intern("quote")) {
 			/* FIXME check args to quote */
 			return car(cdr(args));
+		} else if (fn == intern("do")) {
+			obj x, result;
+			for_list(x, args) {
+				result = eval(car(x), env);
+			}
+			return result;
 		}
-		obj fn = get(env, car(args));
+
+		/* normal function application */
+		fn = get(env, car(args));
 		args = cdr(args);
 
-		/* FIXME: need to handle special forms */
 		obj x;
 		for_list(x, args) {
-			x->value.cons.car = eval(car(x), env);
+			CAR(x) = eval(car(x), env);
 		}
 
 		return op_apply(fn, args);

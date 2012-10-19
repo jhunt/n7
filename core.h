@@ -17,10 +17,10 @@
   - support lambda
   - funcall stack
   - map out core operators
-     QUOTE
-     IF
-     DO (PROGN)
-     WITH (LET, LET* and friends)
+     [x]  QUOTE
+     [ ]  IF
+     [x]  DO (PROGN)
+     [ ]  WITH (LET, LET* and friends)
 
   DATA TYPES
   - vectors

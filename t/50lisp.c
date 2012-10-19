@@ -35,6 +35,25 @@ test_math(void)
 }
 
 static void
+test_special_ops(void)
+{
+	WITH_ABORT_PROTECTION {
+		obj env = globals();
+
+		ok_eval("(quote 1)", fixnum(1), env, "'1 -> 1");
+		ok_eval("(quote (1 2 3))",
+				cons(fixnum(1), cons(fixnum(2), cons(fixnum(3), NIL))),
+				env,
+				"'(1 2 3) -> (1 2 3)");
+
+
+		ok_eval("(do 1)", fixnum(1), env, "(do 1) -> 1");
+		ok_eval("(do 1 2 3)", fixnum(3), env, "(do 1 2 3) -> 3");
+		ok_eval("(do t nil (+ 1 1))", fixnum(2), env, "(do t nil (+ 1 1)) -> 2");
+	};
+}
+
+static void
 test_equality(void)
 {
 	WITH_ABORT_PROTECTION {
@@ -57,6 +76,7 @@ int main(int argc, char **argv)
 
 	test_math();
 	test_equality();
+	test_special_ops();
 
 	done_testing();
 	return 0;
