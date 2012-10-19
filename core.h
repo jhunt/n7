@@ -15,9 +15,12 @@
 
   LISP ESSENTIALS
   - support lambda
-  - full reader
   - funcall stack
   - map out core operators
+     QUOTE
+     IF
+     DO (PROGN)
+     WITH (LET, LET* and friends)
 
   DATA TYPES
   - vectors
