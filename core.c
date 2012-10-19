@@ -78,14 +78,23 @@ hash(const char *str, unsigned int lim)
 }
 
 #define OP_FN(x)    (x)->value.builtin
+
 #define FNUM(x)     (x)->value.fixnum
+
 #define CAR(x)      (x)->value.cons.car
 #define CDR(x)      (x)->value.cons.cdr
+
 #define SYM(x) (x)->value.sym.name
+
 #define STR_N(s)    (s)->value.string.n
 #define STR_LEN(s)  (s)->value.string.len
 #define STR_VAL(s)  (s)->value.string.data
 #define STR_LEFT(s) (STR_N(s) - STR_LEN(s))
+
+#define IO_FD(io)   (io)->value.io.fd
+#define IO_IDX(io)  (io)->value.io.i
+#define IO_LEN(io)  (io)->value.io.len
+#define IO_STR(io)  (io)->value.io.data
 
 
 obj
@@ -167,7 +176,7 @@ set(obj env, obj sym, obj val)
 	for_list(x, env) {
 		if (IS_T(eq(car(car(x)), sym))) {
 			/* FIXME: need setcdr! (and setcar) */
-			car(x)->value.cons.cdr = val;
+			CDR(car(x)) = val;
 			return env;
 		}
 	}
@@ -509,7 +518,7 @@ findsym(unsigned int key, const char *name)
 {
 	obj rest;
 	for_list(rest, SYMBOL_TABLE[key]) {
-		if (strcasecmp(name, car(rest)->value.sym.name) == 0) {
+		if (strcasecmp(name, SYM(car(rest))) == 0) {
 			return car(rest);
 		}
 	}
@@ -770,17 +779,12 @@ strf(obj dst, const char *fmt, ...)
 
 /**  IO  ********************************************************/
 
-#define IO_FD(io)   (io)->value.io.fd
-
-#define IO_IDX(io)  (io)->value.io.i
-#define IO_STR(io)  (io)->value.io.data
-
 obj
 io_fdopen(FILE *file)
 {
 	obj io = OBJECT(OBJ_IO, 0);
 	IO_STR(io) = NULL;
-	io->value.io.len = IO_IDX(io) = 0;
+	IO_LEN(io) = IO_IDX(io) = 0;
 
 	IO_FD(io) = file;
 	return io;
@@ -800,7 +804,7 @@ io_string(const char *str)
 	IO_FD(io) = NULL;
 
 	IO_STR(io) = strdup(str);
-	io->value.io.len = strlen(str);
+	IO_LEN(io) = strlen(str);
 	IO_IDX(io) = 0;
 	return io;
 }
@@ -835,7 +839,7 @@ io_getc(obj io)
 	if (IO_FD(io)) {
 		return fgetc(IO_FD(io));
 	} else {
-		if (IO_IDX(io) >= io->value.io.len) return EOF;
+		if (IO_IDX(io) >= IO_LEN(io)) return EOF;
 		return IO_STR(io)[IO_IDX(io)++];
 	}
 
@@ -870,8 +874,8 @@ io_write_str(obj io, obj str)
 		/* FIXME: io_write_str needs some work */
 		free(IO_STR(io));
 		IO_STR(io) = strdup(STR_VAL(str));
-		io->value.io.len = strlen(IO_STR(io));
-		IO_IDX(io) = io->value.io.len;
+		IO_LEN(io) = strlen(IO_STR(io));
+		IO_IDX(io) = IO_LEN(io);
 		return T;
 	}
 	return NIL;
@@ -894,7 +898,7 @@ io_read_buf(obj io, size_t n)
 
 	} else {
 		strncpy(buf, IO_STR(io)+IO_IDX(io), n);
-		io->value.io.len += strlen(buf);
+		IO_LEN(io) += strlen(buf);
 
 		res = str_dupc(buf);
 		free(buf);
@@ -914,7 +918,7 @@ op_add(obj args)
 	obj term;
 	for_list(term, args) {
 		/* FIXME: op_add: check types! */
-		acc += car(term)->value.fixnum;
+		acc += FNUM(car(term));
 	}
 	return fixnum(acc);
 }
@@ -930,12 +934,12 @@ op_sub(obj args)
 	if (IS_NIL(cdr(args))) {
 		acc = 0; /* (- 45) === (- 0 45) */
 	} else {
-		acc = car(args)->value.fixnum;
+		acc = FNUM(car(args));
 		args = cdr(args);
 	}
 
 	for_list(term, args) {
-		acc -= car(term)->value.fixnum;
+		acc -= FNUM(car(term));
 	}
 	return fixnum(acc);
 }
@@ -946,7 +950,7 @@ op_mult(obj args)
 	long acc = 1;
 	obj term;
 	for_list(term, args) {
-		acc *= car(term)->value.fixnum;
+		acc *= FNUM(car(term));
 	}
 	return fixnum(acc);
 }
@@ -963,12 +967,12 @@ op_div(obj args)
 		acc = 1; /* (/ 4) == 1/4 */
 		abort("/: no ratio support; ergo, no (/ x) support -- go bug jrh");
 	} else {
-		acc = car(args)->value.fixnum;
+		acc = FNUM(car(args));
 		args = cdr(args);
 	}
 
 	for_list(term, args) {
-		acc /= car(term)->value.fixnum;
+		acc /= FNUM(car(term));
 	}
 	return fixnum(acc);
 }
