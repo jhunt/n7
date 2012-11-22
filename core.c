@@ -621,7 +621,7 @@ eval(obj args, obj env)
 		for_list(x, args) {
 			CAR(x) = eval(car(x), env);
 		}
-		return op_call(cons(eval(fn, env), args));
+		return op_call(cons(eval(fn, env), args), env);
 	}
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
@@ -934,7 +934,7 @@ io_read_buf(obj io, size_t n)
 /* FIXME: math operations DON'T handle overflow well */
 
 obj
-op_add(obj args)
+op_add(obj args, obj env)
 {
 	long acc = 0;
 	obj term;
@@ -946,7 +946,7 @@ op_add(obj args)
 }
 
 obj
-op_sub(obj args)
+op_sub(obj args, obj env)
 {
 	long acc = 0;
 	obj term;
@@ -967,7 +967,7 @@ op_sub(obj args)
 }
 
 obj
-op_mult(obj args)
+op_mult(obj args, obj env)
 {
 	long acc = 1;
 	obj term;
@@ -978,7 +978,7 @@ op_mult(obj args)
 }
 
 obj
-op_div(obj args)
+op_div(obj args, obj env)
 {
 	long acc;
 	obj term;
@@ -1000,24 +1000,38 @@ op_div(obj args)
 }
 
 obj
-op_call(obj args)
+op_call(obj args, obj env)
 {
-	return op_apply(nlist(2, car(args), cdr(args)));
+	return op_apply(nlist(2, car(args), cdr(args)), env);
 }
 
 obj
-op_apply(obj args)
+op_apply(obj args, obj env)
 {
 	obj fn = car(args);
 	args = car(cdr(args));
 
 	if (!fn) abort("fn cannot be NULL");
-	if (!IS_BUILTIN(fn)) abort("fn is not a builtin");
-	return (*(OP_FN(fn)))(args);
+	if (IS_BUILTIN(fn)) {
+		return (*(OP_FN(fn)))(args, env);
+
+	} else if (IS_LAMBDA(fn)) {
+		obj a, p;
+		for (a = args, p = fn->value.lambda.params;
+		     !IS_NIL(a) && !IS_NIL(p);
+		     a = cdr(a), p = cdr(p)) {
+
+			set(env, car(p), eval(car(a), env));
+		}
+		return eval(fn->value.lambda.code, env);
+
+	} else {
+		abort("fn is not a function");
+	}
 }
 
 obj
-op_eq(obj args)
+op_eq(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return eq(
@@ -1026,7 +1040,7 @@ op_eq(obj args)
 }
 
 obj
-op_eql(obj args)
+op_eql(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return eql(
@@ -1035,7 +1049,7 @@ op_eql(obj args)
 }
 
 obj
-op_equal(obj args)
+op_equal(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return equal(
@@ -1044,28 +1058,28 @@ op_equal(obj args)
 }
 
 obj
-op_cons(obj args)
+op_cons(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return cons(car(args), car(cdr(args)));
 }
 
 obj
-op_car(obj args)
+op_car(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return car(car(args));
 }
 
 obj
-op_cdr(obj args)
+op_cdr(obj args, obj env)
 {
 	/* FIXME: check arity */
 	return cdr(car(args));
 }
 
 obj
-op_prs(obj args)
+op_prs(obj args, obj env)
 {
 	obj STDOUT = io_fdopen(stdout);
 	io_write_str(STDOUT, car(args));

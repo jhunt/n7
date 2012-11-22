@@ -75,7 +75,7 @@
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
 
-typedef obj (*op_fn)(obj);
+typedef obj (*op_fn)(obj, obj);
 
 struct big_object {
 	unsigned short type;
@@ -234,21 +234,21 @@ obj io_read_form(obj io);
 obj io_write_form(obj io, obj form);
 
 /* primitive ops */
-obj op_add(obj args);
-obj op_sub(obj args);
-obj op_mult(obj args);
-obj op_div(obj args);
-obj op_call(obj args);
-obj op_apply(obj args);
+obj op_add(obj args, obj env);
+obj op_sub(obj args, obj env);
+obj op_mult(obj args, obj env);
+obj op_div(obj args, obj env);
+obj op_call(obj args, obj env);
+obj op_apply(obj args, obj env);
 
-obj op_eq(obj args);
-obj op_eql(obj args);
-obj op_equal(obj args);
+obj op_eq(obj args, obj env);
+obj op_eql(obj args, obj env);
+obj op_equal(obj args, obj env);
 
-obj op_cons(obj args);
-obj op_car(obj args);
-obj op_cdr(obj args);
+obj op_cons(obj args, obj env);
+obj op_car(obj args, obj env);
+obj op_cdr(obj args, obj env);
 
-obj op_prs(obj args);
+obj op_prs(obj args, obj env);
 
 #endif
