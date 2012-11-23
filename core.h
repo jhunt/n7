@@ -23,7 +23,6 @@
      [x]  IF
      [x]  DO (PROGN)
      [.]  LAMBDA
-     [ ]  FN
      [ ]  MACRO
      [X]  CALL/APPLY
      [X]  CONS
