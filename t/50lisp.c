@@ -99,6 +99,10 @@ test_equality(void)
 
 		ok_eval("(equal \"s1\" \"s1\")", T,   "basic string equality");
 		ok_eval("(equal \"s1\" \"s2\")", NIL, "basic string inequality");
+
+		ok_eval("(equal '(1 2 3) '(1 2 3))", T,   "basic list equality");
+		ok_eval("(equal '(1 2 3) '(3 2 1))", NIL, "basic list inequality");
+		ok_eval("(equal '(1 2 3) '(1))", NIL, "short list inequality");
 	}
 }
 

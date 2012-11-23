@@ -136,6 +136,7 @@ globals(void)
 	set(e, intern("equal"), builtin(op_equal));
 
 	set(e, intern("cons"),  builtin(op_cons));
+	set(e, intern("list"),  builtin(op_list));
 	set(e, intern("car"),   builtin(op_car));
 	set(e, intern("cdr"),   builtin(op_cdr));
 	set(e, intern("set"),   builtin(op_set));
@@ -374,6 +375,9 @@ read_list(obj io)
 	return revl(lst);
 }
 
+static int QQ = 0;
+static int QQ_ESC = 0;
+
 obj
 readx(obj io)
 {
@@ -383,7 +387,9 @@ readx(obj io)
 	token = NULL;
 
 again:
-	switch (c = io_getc(io)) {
+	c = io_getc(io);
+	debug3("readx: io_getc returned %c\n", c);
+	switch (c) {
 		case EOF:
 			return NIL;
 
@@ -410,6 +416,9 @@ again:
 
 		case '(':
 			val = read_list(io);
+			if (QQ && !QQ_ESC) {
+				val = cons(intern("list"), val);
+			}
 			break;
 
 		case ')':
@@ -428,10 +437,22 @@ again:
 			val = cons(intern("quote"), cons(readx(io), NIL));
 			break;
 
+		case '`': // `(a ,x b ,y (c ,z)) -> ('a x 'b y ('c z))
+		          // (list 'a x 'b y (list 'c z))
+			QQ = 1; val = readx(io); QQ = 0;
+			break;
+
+		case ',':
+			QQ_ESC = 1; val = readx(io); QQ_ESC = 0;
+			break;
+
 		default:
 			io_ungetc(io, c);
 			token = next_token(io);
 			val = intern(token);
+			if (QQ && !QQ_ESC) {
+				val = cons(intern("quote"), cons(val, NIL));
+			}
 			break;
 	}
 
@@ -1108,6 +1129,7 @@ op_apply(obj args, obj env)
 		return v;
 
 	} else {
+		debug1("fn = %s\n", cdump(fn));
 		abort("fn is not a function");
 	}
 }
@@ -1148,6 +1170,13 @@ op_cons(obj args, obj env)
 	debug2("+op_cons\n");
 	/* FIXME: check arity */
 	return cons(car(args), car(cdr(args)));
+}
+
+obj
+op_list(obj args, obj env)
+{
+	debug2("+op_list\n");
+	return args; /* FIXME: eval each arg */
 }
 
 obj

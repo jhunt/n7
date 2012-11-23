@@ -19,6 +19,7 @@
   - macro handling
   - map out core operators
      [x]  QUOTE
+     [X]  LIST
      [X]  SET
      [x]  IF
      [x]  DO (PROGN)
@@ -275,6 +276,7 @@ obj op_eql(obj args, obj env);
 obj op_equal(obj args, obj env);
 
 obj op_cons(obj args, obj env);
+obj op_list(obj args, obj env);
 obj op_car(obj args, obj env);
 obj op_cdr(obj args, obj env);
 obj op_set(obj args, obj env);
