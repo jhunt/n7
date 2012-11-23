@@ -21,7 +21,7 @@
      [ ]  SET
      [x]  IF
      [x]  DO (PROGN)
-     [ ]  LAMBDA
+     [.]  LAMBDA
      [X]  CALL/APPLY
      [X]  CONS
      [X]  CAR
@@ -71,6 +71,7 @@
 #define OBJ_BUILTIN      0x04
 #define OBJ_STRING       0x05
 #define OBJ_IO           0x06
+#define OBJ_LAMBDA       0x07
 
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
@@ -109,6 +110,11 @@ struct big_object {
 			FILE *fd;
 		} io;
 
+		struct {
+			obj code;
+			obj params;
+		} lambda;
+
 	} value;
 };
 
@@ -122,6 +128,7 @@ struct big_object {
 #define IS_BUILTIN(x)    IS_A(x, BUILTIN)
 #define IS_STRING(x)     IS_A(x, STRING)
 #define IS_IO(x)         IS_A(x, IO)
+#define IS_LAMBDA(x)     IS_A(x, LAMBDA)
 
 #define MAKE_CONSTANT(n) (obj)((n<<TAGGED_BITS)|TAG_CONSTANT)
 #define NIL            MAKE_CONSTANT(0)
@@ -232,6 +239,9 @@ obj io_write_buf(obj io, const char *buf, size_t n);
 /* io - read/write an S-expression */
 obj io_read_form(obj io);
 obj io_write_form(obj io, obj form);
+
+/* lambda - call user-defined function */
+obj lambda(obj l, obj args, obj env);
 
 /* primitive ops */
 obj op_add(obj args, obj env);

@@ -429,6 +429,10 @@ vdump_x(obj str, obj what)
 				strf(str, "<#:builtin:%p:#>", what);
 				break;
 
+			case OBJ_LAMBDA:
+				strf(str, "<#:lambda:%p:#>", what);
+				break;
+
 			default:
 				strf(str, "<#:UNKNOWN:%x:%p:#>", TYPE(what), what);
 				break;
@@ -614,6 +618,14 @@ eval(obj args, obj env)
 
 			args = cdr(args);
 			return eval(car(args), env);
+
+		/* (lambda (args) body ...) */
+		} else if (fn == intern("lambda")) {
+			obj lambda = OBJECT(OBJ_LAMBDA, 0);
+			lambda->value.lambda.params = car(args);
+			lambda->value.lambda.code = cons(
+					intern("do"), cdr(args));
+			return lambda;
 		}
 
 		/* normal function application */
@@ -1021,7 +1033,7 @@ op_apply(obj args, obj env)
 		     !IS_NIL(a) && !IS_NIL(p);
 		     a = cdr(a), p = cdr(p)) {
 
-			set(env, car(p), eval(car(a), env));
+			env = set(env, car(p), eval(car(a), env));
 		}
 		return eval(fn->value.lambda.code, env);
 

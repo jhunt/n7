@@ -102,6 +102,15 @@ test_equality(void)
 	}
 }
 
+static void
+test_lambda(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+		ok_eval("(eql 42 (call (lambda (x y z) (+ x y z)) 30 9 3))", T, "lambda def/call");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	INIT();
@@ -110,6 +119,7 @@ int main(int argc, char **argv)
 	test_equality();
 	test_special_ops();
 	test_core_ops();
+	test_lambda();
 
 	done_testing();
 	return 0;
