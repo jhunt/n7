@@ -18,7 +18,7 @@
   - funcall stack
   - map out core operators
      [x]  QUOTE
-     [ ]  SET
+     [X]  SET
      [x]  IF
      [x]  DO (PROGN)
      [.]  LAMBDA
@@ -283,6 +283,7 @@ obj op_equal(obj args, obj env);
 obj op_cons(obj args, obj env);
 obj op_car(obj args, obj env);
 obj op_cdr(obj args, obj env);
+obj op_set(obj args, obj env);
 
 obj op_prs(obj args, obj env);
 

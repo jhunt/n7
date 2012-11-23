@@ -138,6 +138,7 @@ globals(void)
 	set(e, intern("cons"),  builtin(op_cons));
 	set(e, intern("car"),   builtin(op_car));
 	set(e, intern("cdr"),   builtin(op_cdr));
+	set(e, intern("set"),   builtin(op_set));
 
 	set(e, intern("prs"),   builtin(op_prs));
 
@@ -1165,6 +1166,15 @@ op_cdr(obj args, obj env)
 	debug2("+op_cdr\n");
 	/* FIXME: check arity */
 	return cdr(car(args));
+}
+
+obj
+op_set(obj args, obj env)
+{
+	debug2("+op_set\n");
+	/* FIXME: check arity */
+	set(env, car(args), car(cdr(args)));
+	return car(cdr(args));
 }
 
 obj
