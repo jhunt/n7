@@ -5,8 +5,14 @@
 ; strictly for (experiment|inspir)ation
 ;
 
-(def (call &rest args)
-  (apply args))
+(def sym? (x)
+  (type? 'SYMBOL x))
+
+(def nil? (x)
+  (eq x nil))
+
+;(def (call &rest args)
+;  (apply args))
 
 (def (++ n)
   (+ 1 n))
@@ -16,7 +22,7 @@
 
 (sym? x)
 (nil? x)
-(=? x y)
+(eql x y)
 
 (print "Hello, World")
 

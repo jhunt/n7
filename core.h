@@ -22,6 +22,7 @@
      [x]  IF
      [x]  DO (PROGN)
      [.]  LAMBDA
+     [ ]  DEF
      [X]  CALL/APPLY
      [X]  CONS
      [X]  CAR
