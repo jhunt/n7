@@ -712,18 +712,16 @@ str_segm(obj s, size_t plus)
 {
 	if (STR_LEFT(s) > plus) return;
 
-#if 0
 	if (STR_VAL(s)) {
-		fprintf(stderr, "STR_SEGM:grow %p from %lu/%lu to %lu/%lu\n",
+		debug2("STR_SEGM:grow %p from %lu/%lu to %lu/%lu\n",
 				STR_VAL(s),
 				STR_LEN(s), STR_N(s),
 				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
 	} else {
-		fprintf(stderr, "STR_SEGM:init %p to %lu/%lu\n",
+		debug2("STR_SEGM:init %p to %lu/%lu\n",
 				STR_VAL(s),
 				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
 	}
-#endif
 
 	size_t l = STR_N(s) + STR_BLK(plus);
 	char *re = realloc(STR_VAL(s), l+1);

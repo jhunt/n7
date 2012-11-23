@@ -16,17 +16,20 @@
   LISP ESSENTIALS
   - support lambda
   - funcall stack
+  - macro handling
   - map out core operators
      [x]  QUOTE
      [X]  SET
      [x]  IF
      [x]  DO (PROGN)
      [.]  LAMBDA
-     [ ]  DEF
+     [ ]  FN
+     [ ]  MACRO
      [X]  CALL/APPLY
      [X]  CONS
      [X]  CAR
      [X]  CDR
+     [ ]  SYMS
      [ ]  WITH (LET, LET* and friends)
 
   DATA TYPES
@@ -183,11 +186,6 @@ int type(obj o);
 obj globals(void);
 obj builtin(op_fn op);
 
-#if 0
-obj same(obj a, obj b);
-obj is(obj a, obj b);
-obj eq(obj a, obj b);
-#endif
 obj eq(obj a, obj b);
 obj eql(obj a, obj b);
 obj equal(obj a, obj b);
@@ -264,9 +262,6 @@ obj io_write_buf(obj io, const char *buf, size_t n);
 /* io - read/write an S-expression */
 obj io_read_form(obj io);
 obj io_write_form(obj io, obj form);
-
-/* lambda - call user-defined function */
-obj lambda(obj l, obj args, obj env);
 
 /* primitive ops */
 obj op_add(obj args, obj env);
