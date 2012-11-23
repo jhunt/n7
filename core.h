@@ -193,6 +193,9 @@ obj eql(obj a, obj b);
 obj equal(obj a, obj b);
 
 /* environmentalism */
+obj env_init(void);
+obj env_new(obj env);
+obj env_del(obj env);
 obj get(obj env, obj sym);
 obj set(obj env, obj sym, obj val);
 

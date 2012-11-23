@@ -125,24 +125,24 @@ hash(const char *str, unsigned int lim)
 obj
 globals(void)
 {
-	obj e = NIL;
-	e = set(e, intern("+"), builtin(op_add));
-	e = set(e, intern("-"), builtin(op_sub));
-	e = set(e, intern("*"), builtin(op_mult));
-	e = set(e, intern("/"), builtin(op_div));
+	obj e =  env_init();
+	set(e, intern("+"), builtin(op_add));
+	set(e, intern("-"), builtin(op_sub));
+	set(e, intern("*"), builtin(op_mult));
+	set(e, intern("/"), builtin(op_div));
 
-	e = set(e, intern("eq"),    builtin(op_eq));
-	e = set(e, intern("eql"),   builtin(op_eql));
-	e = set(e, intern("equal"), builtin(op_equal));
+	set(e, intern("eq"),    builtin(op_eq));
+	set(e, intern("eql"),   builtin(op_eql));
+	set(e, intern("equal"), builtin(op_equal));
 
-	e = set(e, intern("cons"),  builtin(op_cons));
-	e = set(e, intern("car"),   builtin(op_car));
-	e = set(e, intern("cdr"),   builtin(op_cdr));
+	set(e, intern("cons"),  builtin(op_cons));
+	set(e, intern("car"),   builtin(op_car));
+	set(e, intern("cdr"),   builtin(op_cdr));
 
-	e = set(e, intern("prs"),   builtin(op_prs));
+	set(e, intern("prs"),   builtin(op_prs));
 
-	e = set(e, intern("call"),  builtin(op_call));
-	e = set(e, intern("apply"), builtin(op_apply));
+	set(e, intern("call"),  builtin(op_call));
+	set(e, intern("apply"), builtin(op_apply));
 
 	return e;
 }
@@ -193,10 +193,12 @@ equal(obj a, obj b)
 obj
 get(obj env, obj sym)
 {
-	obj x;
-	for_list(x, env) {
-		if (IS_T(eq(car(car(x)), sym))) {
-			return cdr(car(x));
+	obj level, x;
+	for_list(level, env) {
+		for_list(x, car(level)) {
+			if (IS_T(eq(car(car(x)), sym))) {
+				return cdr(car(x));
+			}
 		}
 	}
 	return UNDEF;
@@ -206,7 +208,7 @@ obj
 set(obj env, obj sym, obj val)
 {
 	obj x;
-	for_list(x, env) {
+	for_list(x, car(env)) {
 		if (IS_T(eq(car(car(x)), sym))) {
 			/* FIXME: need setcdr! (and setcar) */
 			CDR(car(x)) = val;
@@ -214,10 +216,45 @@ set(obj env, obj sym, obj val)
 		}
 	}
 
-	return cons(
+	CAR(env) = cons(
 		cons(sym, val),
-		env
+		car(env)
 	);
+	return env;
+}
+
+/*
+
+   (
+    car: ( (a . 1) (b . 2) (c . 3) )
+    cdr: (
+          car: ( (a . 2) (b . 4) (c . 6) )
+          cdr: (
+                car: ( (a . 42) )
+                cdr: nil )))
+
+ */
+obj
+env_init(void)
+{
+	return cons(NIL, NIL);
+}
+
+obj
+env_new(obj env)
+{
+	obj oldtop = cons(car(env), cdr(env));
+	CDR(env) = oldtop;
+	CAR(env) = NIL;
+	return env;
+}
+
+obj
+env_del(obj env)
+{
+	CAR(env) = car(cdr(env));
+	CDR(env) = cdr(cdr(env));
+	return env;
 }
 
 /**************************************************/
@@ -1059,14 +1096,17 @@ op_apply(obj args, obj env)
 		return (*(OP_FN(fn)))(args, env);
 
 	} else if (IS_LAMBDA(fn)) {
+		env_new(env);
 		obj a, p;
 		for (a = args, p = fn->value.lambda.params;
 		     !IS_NIL(a) && !IS_NIL(p);
 		     a = cdr(a), p = cdr(p)) {
 
-			env = set(env, car(p), eval(car(a), env));
+			set(env, car(p), eval(car(a), env));
 		}
-		return eval(fn->value.lambda.code, env);
+		obj v = eval(fn->value.lambda.code, env);
+		env_del(env);
+		return v;
 
 	} else {
 		abort("fn is not a function");

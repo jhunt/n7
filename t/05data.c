@@ -26,21 +26,21 @@ test_get_set(void)
 		obj x = intern("x");
 		obj y = intern("y");
 
-		obj e = NIL;
+		obj e = env_init();
 		isnt_defined(get(e,x), "e[x] is undefined");
 		isnt_defined(get(e,y), "e[y] is undefined");
 
-		e = set(e,x,fixnum(42));
+		set(e,x,fixnum(42));
 		is_defined(get(e,x), "e[x] is defined");
 		isnt_defined(get(e,y), "e[y] is not defined");
 		obj_equal(get(e,x), fixnum(42), "x is set to 42");
 
-		e = set(e,y,get(e,x)); /* (set y x) */
+		set(e,y,get(e,x)); /* (set y x) */
 		is_defined(get(e,x), "x persists");
 		is_defined(get(e,y), "y is set now");
 		obj_equal(get(e,y), fixnum(42), "y is also set to 42");
 
-		e = set(e,x,str_dupc("hi"));
+		set(e,x,str_dupc("hi"));
 		obj_equal(get(e,x), str_dupc("hi"), "x is now set to the string 'hi'");
 		obj_equal(get(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
 	}

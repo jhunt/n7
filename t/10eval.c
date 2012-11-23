@@ -5,7 +5,7 @@ test_eval(void)
 {
 	WITH_ABORT_PROTECTION {
 
-		obj env = NIL;
+		obj env = env_init();
 
 		ok(IS_NIL(eval(NIL, env)), "(eval nil) self-evaluates");
 		ok(IS_T(eval(T, env)), "(eval t) self-evaluates");
@@ -17,7 +17,7 @@ test_eval(void)
 		ok(eval(str, env) == str, "(eval \"test\") self-evaluates");
 
 		obj sym = intern("x");
-		env = set(env, sym, fixnum(42));
+		set(env, sym, fixnum(42));
 		ok(IS_T(eql(eval(sym, env), fixnum(42))), "(eval x) causes symbol lookup");
 	}
 }
