@@ -10,11 +10,14 @@
 /* abort-specific implementation details */
 static jmp_buf *ABORT_JMP = NULL;
 
+int DEBUG_LEVEL = 0;
+
 #define ABORT_OOM(subsys) abort(subsys ": out of memory")
 
 static obj
 OBJECT(unsigned short type, size_t varlen)
 {
+	debug3("allocating %s (%#04x) of +%i bytes\n", OBJ_TYPE_NAMES[type], type, varlen);
 	obj o = calloc(1,sizeof(bigobj)+varlen);
 	if (!o) ABORT_OOM("OBJECT"); /* LCOV_EXCL_LINE */
 	o->type = type;
@@ -29,6 +32,7 @@ lc(const char *s)
 	for (p = new; *p; p++) {
 		if (isupper(*p)) *p = tolower(*p);
 	}
+	debug3("lc('%s') => '%s'\n", s, new);
 	return new;
 }
 
@@ -42,6 +46,7 @@ obj SYMBOL_TABLE[SYMBOL_TABLE_SIZE];
 void
 _abort(const char *file, unsigned int line, const char *msg)
 {
+	debug1("ABORT @%s:%u: %s\n", file, line, msg);
 	/* LCOV_EXCL_START */
 	if (ABORT_JMP) {
 		longjmp(*ABORT_JMP, 42);
@@ -58,12 +63,32 @@ void on_abort(jmp_buf *jmp)
 	ABORT_JMP = jmp;
 }
 
+/**  Debugging  *************************************************/
+
+int debugging(int new_level)
+{
+	int old = DEBUG_LEVEL;
+	DEBUG_LEVEL = new_level;
+	return old;
+}
+
+void _debug(int level, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	fprintf(stderr, "debug%i> ", level);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
 /**  Initialization  ********************************************/
 
 void
 INIT(void)
 {
 	unsigned int i;
+	debug1("initializing runtime\n");
+	debug2("creating initial symbol table of %i entries\n", SYMBOL_TABLE_SIZE);
 	for (i = 0; i < SYMBOL_TABLE_SIZE; i++) {
 		SYMBOL_TABLE[i] = NIL;
 	}
@@ -948,6 +973,7 @@ io_read_buf(obj io, size_t n)
 obj
 op_add(obj args, obj env)
 {
+	debug2("+op_add\n");
 	long acc = 0;
 	obj term;
 	for_list(term, args) {
@@ -960,6 +986,7 @@ op_add(obj args, obj env)
 obj
 op_sub(obj args, obj env)
 {
+	debug2("+op_sub\n");
 	long acc = 0;
 	obj term;
 
@@ -981,6 +1008,7 @@ op_sub(obj args, obj env)
 obj
 op_mult(obj args, obj env)
 {
+	debug2("+op_mult\n");
 	long acc = 1;
 	obj term;
 	for_list(term, args) {
@@ -992,6 +1020,7 @@ op_mult(obj args, obj env)
 obj
 op_div(obj args, obj env)
 {
+	debug2("+op_div\n");
 	long acc;
 	obj term;
 
@@ -1014,12 +1043,14 @@ op_div(obj args, obj env)
 obj
 op_call(obj args, obj env)
 {
+	debug2("+op_call\n");
 	return op_apply(nlist(2, car(args), cdr(args)), env);
 }
 
 obj
 op_apply(obj args, obj env)
 {
+	debug2("+op_apply\n");
 	obj fn = car(args);
 	args = car(cdr(args));
 
@@ -1045,6 +1076,7 @@ op_apply(obj args, obj env)
 obj
 op_eq(obj args, obj env)
 {
+	debug2("+op_eq\n");
 	/* FIXME: check arity */
 	return eq(
 		car(args),
@@ -1054,6 +1086,7 @@ op_eq(obj args, obj env)
 obj
 op_eql(obj args, obj env)
 {
+	debug2("+op_eql\n");
 	/* FIXME: check arity */
 	return eql(
 		car(args),
@@ -1063,6 +1096,7 @@ op_eql(obj args, obj env)
 obj
 op_equal(obj args, obj env)
 {
+	debug2("+op_equal\n");
 	/* FIXME: check arity */
 	return equal(
 		car(args),
@@ -1072,6 +1106,7 @@ op_equal(obj args, obj env)
 obj
 op_cons(obj args, obj env)
 {
+	debug2("+op_cons\n");
 	/* FIXME: check arity */
 	return cons(car(args), car(cdr(args)));
 }
@@ -1079,6 +1114,7 @@ op_cons(obj args, obj env)
 obj
 op_car(obj args, obj env)
 {
+	debug2("+op_car\n");
 	/* FIXME: check arity */
 	return car(car(args));
 }
@@ -1086,6 +1122,7 @@ op_car(obj args, obj env)
 obj
 op_cdr(obj args, obj env)
 {
+	debug2("+op_cdr\n");
 	/* FIXME: check arity */
 	return cdr(car(args));
 }
@@ -1093,6 +1130,7 @@ op_cdr(obj args, obj env)
 obj
 op_prs(obj args, obj env)
 {
+	debug2("+op_prs\n");
 	obj STDOUT = io_fdopen(stdout);
 	io_write_str(STDOUT, car(args));
 	return T;

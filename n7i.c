@@ -1,11 +1,27 @@
 #include <stdio.h>
 #include "core.h"
+#include <unistd.h>
 
 #define print(out,x) io_print(out,vdump(x))
 #define PROMPT() printf("\n> ")
 
 int main(int argc, char **argv)
 {
+	int dbg = 0;
+	char opt;
+	while ((opt = getopt(argc, argv, "d")) != -1) {
+		switch (opt) {
+		case 'd':
+			dbg++;
+			if (dbg > 3) { dbg = 3; }
+			break;
+		default:
+			fprintf(stderr, "Usage: %s [-d[+]] < script\n", argv[0]);
+			exit(1);
+		}
+	}
+
+	debugging(dbg);
 	INIT();
 
 	obj in  = io_fdopen(stdin);

@@ -73,6 +73,18 @@
 #define OBJ_IO           0x06
 #define OBJ_LAMBDA       0x07
 
+static const char *OBJ_TYPE_NAMES[] = {
+	"SPECIAL",
+	"SYMBOL",
+	"CONS",
+	"FIXNUM",
+	"BUILTIN",
+	"STRING",
+	"IO",
+	"LAMBDA",
+	NULL
+};
+
 typedef struct big_object  bigobj;
 typedef struct big_object* obj;
 
@@ -147,6 +159,15 @@ struct big_object {
 void on_abort(jmp_buf *jmp);
 void _abort(const char *file, unsigned int line, const char *msg);
 #define abort(m) _abort(__FILE__, __LINE__, (m))
+
+/**************************************************/
+
+extern int DEBUG_LEVEL;
+int debugging(int new_level);
+void _debug(int level, const char *fmt, ...);
+#define debug1(...) if (DEBUG_LEVEL >= 1) _debug(1, __VA_ARGS__);
+#define debug2(...) if (DEBUG_LEVEL >= 2) _debug(2, __VA_ARGS__);
+#define debug3(...) if (DEBUG_LEVEL >= 3) _debug(3, __VA_ARGS__);
 
 /**************************************************/
 
