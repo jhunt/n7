@@ -146,6 +146,8 @@ globals(void)
 	set(e, intern("call"),  builtin(op_call));
 	set(e, intern("apply"), builtin(op_apply));
 
+	load("system.n", e);
+
 	return e;
 }
 
@@ -1129,8 +1131,8 @@ op_apply(obj args, obj env)
 		return v;
 
 	} else {
-		debug1("fn = %s\n", cdump(fn));
-		abort("fn is not a function");
+		debug1("apply/fn = %s\n", cdump(fn));
+		abort("called (apply) on non-function");
 	}
 }
 
@@ -1210,5 +1212,17 @@ op_prs(obj args, obj env)
 	debug2("+op_prs\n");
 	obj STDOUT = io_fdopen(stdout);
 	io_write_str(STDOUT, car(args));
+	return T;
+}
+
+obj
+load(const char *path, obj env)
+{
+	obj f = io_fopen(path, "r");
+	debug1("loadsys... %s\n", path);
+	if (IS_NIL(f)) debug1("%s - failed to load\n", path);
+	if (IS_NIL(f)) return NIL;
+	eval(readx(f), env);
+	io_close(f);
 	return T;
 }

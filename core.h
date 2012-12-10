@@ -17,6 +17,7 @@
   - support lambda
   - funcall stack
   - macro handling
+  - &rest handling in lambda / macro
   - map out core operators
      [x]  QUOTE
      [X]  LIST
@@ -31,6 +32,10 @@
      [X]  CDR
      [ ]  SYMS
      [ ]  WITH (LET, LET* and friends)
+  - define system based on core operators
+  - define perdicates:
+     [ ]  ATOM?
+     [ ]  LIST?
 
   DATA TYPES
   - vectors
@@ -282,5 +287,7 @@ obj op_cdr(obj args, obj env);
 obj op_set(obj args, obj env);
 
 obj op_prs(obj args, obj env);
+
+obj load(const char *path, obj env);
 
 #endif

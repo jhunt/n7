@@ -128,6 +128,25 @@ test_get_set(void)
 	}
 }
 
+static void
+test_predicates(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+		ok_eval("(null? NIL)", T, "`null?` recognizes NIL");
+
+		ok_eval("(null? (car (cdr (list 1))))", T,
+				"`null?` recognizes the end of list");
+
+		ok_eval("(null? 1)", NIL,
+				"`null?` sees a number as not null");
+
+		debugging(2);
+		ok_eval("(null? (cons 1 2))", NIL,
+				"`null?`: cons is not null");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	INIT();
@@ -138,6 +157,8 @@ int main(int argc, char **argv)
 	test_core_ops();
 	test_lambda();
 	test_get_set();
+
+	test_predicates();
 
 	done_testing();
 	return 0;

@@ -1,0 +1,5 @@
+(set 'null?
+  (lambda (x)
+    (eq x NIL)))
+
+; vim:ft=lisp
