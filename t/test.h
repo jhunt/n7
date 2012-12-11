@@ -24,12 +24,6 @@ done_testing(void)
 	if (!PLANNED) {
 		fprintf(stdout, "1..%u\n", TOTAL_TESTS);
 	}
-#if 0
-	if (FAILED_TESTS) {
-		fprintf(stdout, "# Looks like you failed %u out of %u tests\n",
-				FAILED_TESTS, TOTAL_TESTS);
-	}
-#endif
 }
 
 inline void
