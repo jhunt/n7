@@ -684,6 +684,16 @@ eval(obj args, obj env)
 			/* FIXME check args to quote */
 			return car(args);
 
+		/* (eval '(+ 1 2 3)) */
+		} else if (fn == intern("eval")) {
+			/* FIXME check that args is a list of 1 */
+			debug1("calling eval again, args = %s\n", cdump(car(args)));
+			return eval(car(args), env);
+
+		/* (let (x y) (...)) */
+		} else if (fn == intern("let")) {
+			return NIL; /* FIXME: TODO */
+
 		/* (do x y z) -> eval all, return last */
 		} else if (fn == intern("do")) {
 			obj x, result = NIL;
@@ -705,6 +715,14 @@ eval(obj args, obj env)
 			args = cdr(args);
 			return eval(car(args), env);
 
+		/* (and cond1 cond2 ...) */
+		} else if (fn == intern("and")) {
+			return NIL; /* FIXME: TODO */
+
+		/* (or cond1 cond2 ...) */
+		} else if (fn == intern("or")) {
+			return NIL; /* FIXME: TODO */
+
 		/* (lambda (args) body ...) */
 		} else if (fn == intern("lambda")) {
 			obj lambda = OBJECT(OBJ_LAMBDA, 0);
@@ -712,6 +730,10 @@ eval(obj args, obj env)
 			lambda->value.lambda.code = cons(
 					intern("do"), cdr(args));
 			return lambda;
+
+		} else if (fn == intern("macro")) {
+			return NIL; /* FIXME: TODO */
+
 		}
 
 		/* normal function application */

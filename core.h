@@ -18,24 +18,32 @@
   - funcall stack
   - macro handling
   - &rest handling in lambda / macro
-  - map out core operators
-     [x]  QUOTE
-     [X]  LIST
-     [X]  SET
-     [x]  IF
-     [x]  DO (PROGN)
+  - layer0 (special forms)
+     [X]  QUOTE
+     [X]  EVAL
+     [ ]  LET
+     [X]  DO
+     [X]  IF
+     [-]  AND
+     [-]  OR
      [.]  LAMBDA
+     [/]  SET (setq) <------- implemented as op
      [ ]  MACRO
-     [X]  CALL/APPLY
+     [ ]  ENSURE (unwind-protect)
+  - layer1 (regular forms coded in C)
      [X]  CONS
      [X]  CAR
      [X]  CDR
+     [/]  <arithmetic ops>
+     [ ]  EQ/EQL/EQUAL
+     [X]  PRS
+  - layer2 (regular forms coded in N7)
+     [/]  LIST <------------- in C currently
+     [/]  CALL <------------- in C currently
+     [/]  APPLY <------------ in C currently
      [ ]  SYMS
-     [ ]  WITH (LET, LET* and friends)
-  - define system based on core operators
-  - define perdicates:
-     [ ]  ATOM?
-     [ ]  LIST?
+     [ ]  LET* [macro on top of LET]
+     [ ]  IS? (+ other type predicates)
 
   DATA TYPES
   - vectors

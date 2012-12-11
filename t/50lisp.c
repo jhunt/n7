@@ -24,6 +24,17 @@ ok_eval(const char *code, obj expect, const char *msg)
 }
 
 static void
+test_eval(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+
+		ok_eval("1", fixnum(1), "eval can self-eval literals");
+		ok_eval("(eval 1)", fixnum(1), "eval can eval an eval!");
+	}
+}
+
+static void
 test_math(void)
 {
 	WITH_ABORT_PROTECTION {
@@ -135,15 +146,17 @@ test_predicates(void)
 		ENV = globals();
 		ok_eval("(null? NIL)", T, "`null?` recognizes NIL");
 
+		ok_eval("(null? ())", T, "`null?` recognizes the empty list");
+
 		ok_eval("(null? (car (cdr (list 1))))", T,
 				"`null?` recognizes the end of list");
 
-		ok_eval("(null? 1)", NIL,
-				"`null?` sees a number as not null");
+		ok_eval("(eq 1 NIL)", NIL, "eq 1 NIL is false");
+		//ok_eval("(null? 1)", NIL,
+		//	"`null?` sees a number as not null");
 
-		debugging(2);
-		ok_eval("(null? (cons 1 2))", NIL,
-				"`null?`: cons is not null");
+		//ok_eval("(null? (cons 1 2))", NIL,
+		//	"`null?`: cons is not null");
 	}
 }
 
@@ -151,6 +164,7 @@ int main(int argc, char **argv)
 {
 	INIT();
 
+	test_eval();
 	test_math();
 	test_equality();
 	test_special_ops();
