@@ -674,28 +674,32 @@ eval(obj args, obj env)
 	}
 
 	if (IS_CONS(args)) {
-		obj fn = car(args);
+		obj head = car(args);
 		args = cdr(args);
 
 		/* handle special forms like QUOTE and DO */
 
 		/* (quote x) -> x */
-		if (fn == intern("quote")) {
+		if (head == intern("quote")) {
+			debug2("eval::quote\n");
 			/* FIXME check args to quote */
 			return car(args);
 
 		/* (eval '(+ 1 2 3)) */
-		} else if (fn == intern("eval")) {
+		} else if (head == intern("eval")) {
+			debug2("eval::eval (that's so meta)\n");
 			/* FIXME check that args is a list of 1 */
 			debug1("calling eval again, args = %s\n", cdump(car(args)));
 			return eval(car(args), env);
 
 		/* (let (x y) (...)) */
-		} else if (fn == intern("let")) {
+		} else if (head == intern("let")) {
+			debug2("eval::let\n");
 			return NIL; /* FIXME: TODO */
 
 		/* (do x y z) -> eval all, return last */
-		} else if (fn == intern("do")) {
+		} else if (head == intern("do")) {
+			debug2("eval::do\n");
 			obj x, result = NIL;
 			for_list(x, args) {
 				result = eval(car(x), env);
@@ -703,7 +707,8 @@ eval(obj args, obj env)
 			return result;
 
 		/* (if cond (then) (else)) -> do the right thing */
-		} else if (fn == intern("if")) {
+		} else if (head == intern("if")) {
+			debug2("eval::if\n");
 			/* check arity, should be 3 (if (test) (then-do) (else)) */
 			obj test = car(args);
 			args = cdr(args);
@@ -716,32 +721,50 @@ eval(obj args, obj env)
 			return eval(car(args), env);
 
 		/* (and cond1 cond2 ...) */
-		} else if (fn == intern("and")) {
-			return NIL; /* FIXME: TODO */
+		} else if (head == intern("and")) {
+			debug2("eval::and\n");
+			obj cond;
+			for_list(cond, args) {
+				if (IS_NIL(eval(car(cond), env))) {
+					return NIL;
+				}
+			}
+			return T;
 
 		/* (or cond1 cond2 ...) */
-		} else if (fn == intern("or")) {
-			return NIL; /* FIXME: TODO */
+		} else if (head == intern("or")) {
+			debug2("eval::or\n");
+			obj cond;
+			for_list(cond, args) {
+				if (!IS_NIL(eval(car(cond), env))) {
+					return T;
+				}
+			}
+			return NIL;
 
 		/* (lambda (args) body ...) */
-		} else if (fn == intern("lambda")) {
+		} else if (head == intern("lambda")) {
+			debug2("eval::lambda\n");
 			obj lambda = OBJECT(OBJ_LAMBDA, 0);
 			lambda->value.lambda.params = car(args);
-			lambda->value.lambda.code = cons(
-					intern("do"), cdr(args));
+			lambda->value.lambda.code   = car(cdr(args));
+			debug3("  lambda params = %s\n", cdump(lambda->value.lambda.params));
+			debug3("  lambda code   = %s\n", cdump(lambda->value.lambda.code));
 			return lambda;
 
-		} else if (fn == intern("macro")) {
+		} else if (head == intern("macro")) {
+			debug2("eval::macro\n");
 			return NIL; /* FIXME: TODO */
 
-		}
-
 		/* normal function application */
-		obj x;
-		for_list(x, args) {
-			CAR(x) = eval(car(x), env);
+		} else {
+			debug2("eval::[%s]\n", cdump(head));
+			obj x;
+			for_list(x, args) {
+				CAR(x) = eval(car(x), env);
+			}
+			return op_call(cons(eval(head, env), args), env);
 		}
-		return op_call(cons(eval(fn, env), args), env);
 	}
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
@@ -1154,7 +1177,7 @@ op_apply(obj args, obj env)
 
 	} else {
 		debug1("apply/fn = %s\n", cdump(fn));
-		abort("called (apply) on non-function");
+		abort("called apply on non-function");
 	}
 }
 

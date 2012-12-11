@@ -14,18 +14,17 @@
   TODO:
 
   LISP ESSENTIALS
-  - support lambda
   - funcall stack
   - macro handling
   - &rest handling in lambda / macro
-  - layer0 (special forms)
+  - layer0 (special forms - eval)
      [X]  QUOTE
      [X]  EVAL
      [ ]  LET
      [X]  DO
      [X]  IF
-     [-]  AND
-     [-]  OR
+     [X]  AND
+     [X]  OR
      [.]  LAMBDA
      [/]  SET (setq) <------- implemented as op
      [ ]  MACRO
@@ -34,8 +33,8 @@
      [X]  CONS
      [X]  CAR
      [X]  CDR
-     [/]  <arithmetic ops>
-     [ ]  EQ/EQL/EQUAL
+     [X]  <arithmetic ops>
+     [X]  EQ/EQL/EQUAL
      [X]  PRS
   - layer2 (regular forms coded in N7)
      [/]  LIST <------------- in C currently

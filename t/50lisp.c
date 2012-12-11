@@ -5,6 +5,8 @@ static obj ENV = NIL;
 static void
 ok_eval(const char *code, obj expect, const char *msg)
 {
+	if (!msg) { msg = code; }
+
 	obj io = io_string(code);
 	obj form = readx(io);
 
@@ -29,8 +31,36 @@ test_eval(void)
 	WITH_ABORT_PROTECTION {
 		ENV = globals();
 
-		ok_eval("1", fixnum(1), "eval can self-eval literals");
+		ok_eval("T", T, "self-eval T");
+		ok_eval("NIL", NIL, "self-eval NIL");
+		ok_eval("1", fixnum(1), "self-eval literals");
+
 		ok_eval("(eval 1)", fixnum(1), "eval can eval an eval!");
+	}
+}
+
+static void
+test_logic(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+
+		ok_eval("(and)", T, NULL);
+		ok_eval("(and T)", T, NULL);
+		ok_eval("(and 1)", T, NULL);
+		ok_eval("(and 0)", T, NULL);
+		ok_eval("(and 0 1 2)", T, NULL);
+		ok_eval("(and NIL)", NIL, NULL);
+		ok_eval("(and T NIL)", NIL, NULL);
+		ok_eval("(and 1 (and 2 3) (and 4 (and)))", T, "nested (and)s");
+
+		ok_eval("(or)", NIL, NULL);
+		ok_eval("(or T T)", T, NULL);
+		ok_eval("(or T NIL)", T, NULL);
+		ok_eval("(or NIL T)", T, NULL);
+		ok_eval("(or (or 1 2) (or NIL NIL NIL (or NIL T)))", T, "nested (or)s");
+
+		ok_eval("(and (or NIL T) (and T NIL))", NIL, "nested (and)/(or)s");
 	}
 }
 
@@ -165,6 +195,8 @@ int main(int argc, char **argv)
 	INIT();
 
 	test_eval();
+	test_logic();
+
 	test_math();
 	test_equality();
 	test_special_ops();
