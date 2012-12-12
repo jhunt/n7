@@ -187,29 +187,22 @@ test_predicates(void)
 {
 	WITH_ABORT_PROTECTION {
 		ENV = globals();
+		ok_eval("(null? 288)", NIL, NULL);
+		ok_eval("(eq nil nil)", T, NULL);
+		ok_eval("(eq NIL nil)", T, NULL);
 		ok_eval("(null? nil)", T, NULL);
-		ok_eval("(null? NIL)", T, "`null?` recognizes NIL");
 
+		ok_eval("(eq () nil)", T, NULL);
 		ok_eval("(null? ())", T, NULL);
-		ok_eval("(null? ())", T, "`null?` recognizes the empty list");
-
+		ok_eval("(eq (car (cdr (list 1))) nil)", T, NULL);
 		ok_eval("(null? (car (cdr (list 1))))", T, NULL);
-		ok_eval("(null? (car (cdr (list 1))))", T,
-				"`null?` recognizes the end of list");
 
-		ok_eval("(eq 1 NIL)", NIL, "eq 1 NIL is false");
-		debugging(3);
+		ok_eval("(eq 1 nil)", NIL, "eq 1 NIL is false");
 		ok_eval("(null? 1)", NIL, NULL);
-		//ok_eval("(null? 1)", NIL,
-		//	"`null?` sees a number as not null");
-
-		ok_eval("(null? (cons 1 2))", NIL, NULL);
-		//ok_eval("(null? (cons 1 2))", NIL,
-		//	"`null?`: cons is not null");
-		//
-
-		ok_eval("(ne 1 2)", T, NULL);
-		ok_eval("(ne 1 1)", NIL, NULL);
+		ok_eval("(ne 'x 'y)", T, NULL);
+		ok_eval("(ne 'x 'x)", NIL, NULL);
+		ok_eval("(not (eq 'x 'x))", NIL, NULL);
+		ok_eval("(eq 'x 'x)", T, NULL);
 	}
 }
 

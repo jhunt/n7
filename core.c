@@ -121,6 +121,9 @@ hash(const char *str, unsigned int lim)
 #define IO_LEN(io)  (io)->value.io.len
 #define IO_STR(io)  (io)->value.io.data
 
+#define L_PARAMS(l) (l)->value.lambda.params
+#define L_BODY(l)   (l)->value.lambda.code
+
 
 obj
 globals(void)
@@ -457,7 +460,6 @@ again:
 		case ';':
 			for (c = io_getc(io); c != EOF && c != '\n'; c = io_getc(io))
 				;
-			c = io_getc(io);
 			goto again;
 
 		default:
@@ -757,15 +759,13 @@ eval(obj args, obj env)
 			}
 			return NIL;
 
-		/* (lambda (args) (body)) -> #lambda */
+		/* (lambda (arglist) body) -> #lambda */
 		} else if (head == intern("lambda")) {
 			debug2("eval::lambda\n");
-			obj lambda = OBJECT(OBJ_LAMBDA, 0);
-			lambda->value.lambda.params = car(args);
-			lambda->value.lambda.code   = car(cdr(args));
-			debug3("  lambda params = %s\n", cdump(lambda->value.lambda.params));
-			debug3("  lambda code   = %s\n", cdump(lambda->value.lambda.code));
-			return lambda;
+			obj l = OBJECT(OBJ_LAMBDA, 0);
+			L_PARAMS(l) = car(args);
+			L_BODY(l)   = car(cdr(args));
+			return l;
 
 		/* (macro name (args) replacement) -> ... */
 		} else if (head == intern("macro")) {
@@ -775,11 +775,12 @@ eval(obj args, obj env)
 		/* normal function application */
 		} else {
 			debug2("eval::[%s]\n", cdump(head));
-			obj x;
+			obj new = NIL, x;
 			for_list(x, args) {
-				CAR(x) = eval(car(x), env);
+				new = cons(eval(car(x), env), new);
 			}
-			return op_call(cons(eval(head, env), args), env);
+			new = revl(new);
+			return op_call(cons(eval(head, env), new), env);
 		}
 	}
 
@@ -1183,22 +1184,27 @@ op_apply(obj args, obj env)
 	debug2("+op_apply\n");
 	obj fn = car(args);
 	args = car(cdr(args));
+	debug1("applying %s with args %s\n", cdump(fn), cdump(args));
 
 	if (!fn) abort("fn cannot be NULL");
 	if (IS_BUILTIN(fn)) {
 		return (*(OP_FN(fn)))(args, env);
 
 	} else if (IS_LAMBDA(fn)) {
+		debug1("apply:lambda code is... %s\n", cdump(L_BODY(fn)));
 		env_new(env);
 		obj a, p;
-		for (a = args, p = fn->value.lambda.params;
+		for (a = args, p = L_PARAMS(fn);
 		     !IS_NIL(a) && !IS_NIL(p);
 		     a = cdr(a), p = cdr(p)) {
 
-			set(env, car(p), eval(car(a), env));
+			set(env, car(p), car(a));
 		}
-		obj v = eval(fn->value.lambda.code, env);
+		debug1("apply:calling lambda with e: %s\n", cdump(env));
+		debug1("apply:lambda code is... %s\n", cdump(L_BODY(fn)));
+		obj v = eval(L_BODY(fn), env);
 		env_del(env);
+		debug1("RETURN %s\n", cdump(v));
 		return v;
 
 	} else {

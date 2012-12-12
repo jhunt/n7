@@ -5,15 +5,13 @@
   (lambda (x)
     (eq x nil)))
 
+(set 'null?
+  (lambda (x)
+    (eq x nil)))
+
 (set 'ne
   (lambda (x y)
     (not (eq x y))))
-
-(set 'null?
-  (lambda (x)
-    (do
-      ;(prs x)
-      (eq x nil))))
 
 (set 'is-a?
   (lambda (vtype obj)

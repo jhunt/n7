@@ -25,7 +25,7 @@
      [X]  IF
      [X]  AND
      [X]  OR
-     [.]  LAMBDA
+     [X]  LAMBDA
      [/]  SET (setq) <------- implemented as op
      [ ]  MACRO
      [ ]  ENSURE (unwind-protect)
