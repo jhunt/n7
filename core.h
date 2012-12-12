@@ -36,6 +36,7 @@
      [X]  <arithmetic ops>
      [X]  EQ/EQL/EQUAL
      [X]  PRS
+     [ ]  TYPEOF
   - layer2 (regular forms coded in N7)
      [/]  LIST <------------- in C currently
      [/]  CALL <------------- in C currently
@@ -252,6 +253,7 @@ void strf(obj dst, const char *fmt, ...);
 obj io_fdopen(FILE *fd);
 obj io_fopen(const char *path, const char *mode);
 obj io_string(const char *str);
+obj io_eof(obj io);
 void io_rewind(obj io);
 obj io_close(obj io);
 
@@ -294,6 +296,8 @@ obj op_cdr(obj args, obj env);
 obj op_set(obj args, obj env);
 
 obj op_prs(obj args, obj env);
+
+obj op_typeof(obj args, obj env);
 
 obj load(const char *path, obj env);
 

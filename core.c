@@ -143,6 +143,8 @@ globals(void)
 
 	set(e, intern("prs"),   builtin(op_prs));
 
+	set(e, intern("typeof"), builtin(op_typeof));
+
 	set(e, intern("call"),  builtin(op_call));
 	set(e, intern("apply"), builtin(op_apply));
 
@@ -215,11 +217,15 @@ set(obj env, obj sym, obj val)
 	for_list(x, car(env)) {
 		if (IS_T(eq(car(car(x)), sym))) {
 			/* FIXME: need setcdr! (and setcar) */
+			debug1("set existing %s to %s\n",
+					cdump(sym), cdump(val));
 			CDR(car(x)) = val;
 			return env;
 		}
 	}
 
+	debug1("set new %s to %s\n",
+			cdump(sym), cdump(val));
 	CAR(env) = cons(
 		cons(sym, val),
 		car(env)
@@ -448,6 +454,12 @@ again:
 			QQ_ESC = 1; val = readx(io); QQ_ESC = 0;
 			break;
 
+		case ';':
+			for (c = io_getc(io); c != EOF && c != '\n'; c = io_getc(io))
+				;
+			c = io_getc(io);
+			goto again;
+
 		default:
 			io_ungetc(io, c);
 			token = next_token(io);
@@ -659,6 +671,7 @@ intern(const char *name)
 obj
 eval(obj args, obj env)
 {
+	debug2("+%s\n", cdump(args));
 	/* self-evaluating stuff */
 	if (IS_NIL(args)) return NIL;
 	if (IS_T(args)) return T;
@@ -670,7 +683,9 @@ eval(obj args, obj env)
 	/* symbol lookup */
 	if (IS_SYMBOL(args)) {
 		obj val = get(env, args);
-		return DEF(val) ? val : NIL;
+		val = DEF(val) ? val : NIL;
+		debug2("lookup %s == %s\n", cdump(args), cdump(val));
+		return val;
 	}
 
 	if (IS_CONS(args)) {
@@ -685,7 +700,7 @@ eval(obj args, obj env)
 			/* FIXME check args to quote */
 			return car(args);
 
-		/* (eval '(+ 1 2 3)) */
+		/* (eval '(+ 1 2 3)) -> call eval again! */
 		} else if (head == intern("eval")) {
 			debug2("eval::eval (that's so meta)\n");
 			/* FIXME check that args is a list of 1 */
@@ -720,7 +735,7 @@ eval(obj args, obj env)
 			args = cdr(args);
 			return eval(car(args), env);
 
-		/* (and cond1 cond2 ...) */
+		/* (and cond1 cond2 ...) -> t if all cond are not NIL */
 		} else if (head == intern("and")) {
 			debug2("eval::and\n");
 			obj cond;
@@ -731,7 +746,7 @@ eval(obj args, obj env)
 			}
 			return T;
 
-		/* (or cond1 cond2 ...) */
+		/* (or cond1 cond2 ...) -> t if at least one cond is not NIL */
 		} else if (head == intern("or")) {
 			debug2("eval::or\n");
 			obj cond;
@@ -742,7 +757,7 @@ eval(obj args, obj env)
 			}
 			return NIL;
 
-		/* (lambda (args) body ...) */
+		/* (lambda (args) (body)) -> #lambda */
 		} else if (head == intern("lambda")) {
 			debug2("eval::lambda\n");
 			obj lambda = OBJECT(OBJ_LAMBDA, 0);
@@ -752,6 +767,7 @@ eval(obj args, obj env)
 			debug3("  lambda code   = %s\n", cdump(lambda->value.lambda.code));
 			return lambda;
 
+		/* (macro name (args) replacement) -> ... */
 		} else if (head == intern("macro")) {
 			debug2("eval::macro\n");
 			return NIL; /* FIXME: TODO */
@@ -781,12 +797,12 @@ str_segm(obj s, size_t plus)
 	if (STR_LEFT(s) > plus) return;
 
 	if (STR_VAL(s)) {
-		debug2("STR_SEGM:grow %p from %lu/%lu to %lu/%lu\n",
+		debug3("STR_SEGM:grow %p from %lu/%lu to %lu/%lu\n",
 				STR_VAL(s),
 				STR_LEN(s), STR_N(s),
 				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
 	} else {
-		debug2("STR_SEGM:init %p to %lu/%lu\n",
+		debug3("STR_SEGM:init %p to %lu/%lu\n",
 				STR_VAL(s),
 				STR_LEN(s)+plus,STR_N(s)+STR_BLK(plus));
 	}
@@ -970,6 +986,16 @@ io_string(const char *str)
 	IO_LEN(io) = strlen(str);
 	IO_IDX(io) = 0;
 	return io;
+}
+
+obj
+io_eof(obj io)
+{
+	if (IO_FD(io)) {
+		return feof(IO_FD(io)) ? T : NIL;
+	} else {
+		return IO_IDX(io) >= IO_LEN(io) ? T : NIL;
+	}
 }
 
 void
@@ -1176,7 +1202,7 @@ op_apply(obj args, obj env)
 		return v;
 
 	} else {
-		debug1("apply/fn = %s\n", cdump(fn));
+		debug1("applying function %s\n", cdump(fn));
 		abort("called apply on non-function");
 	}
 }
@@ -1261,13 +1287,41 @@ op_prs(obj args, obj env)
 }
 
 obj
+op_typeof(obj args, obj env)
+{
+	debug2("+op_typeof\n");
+	/* FIXME: check arity of args */
+	obj x = car(args);
+	if (IS_T(x))       return intern("BOOLEAN");
+	if (IS_CONS(x))    return intern("CONS");
+	if (IS_SYMBOL(x))  return intern("SYMBOL");
+	if (IS_FIXNUM(x))  return intern("FIXNUM");
+
+	if (IS_BUILTIN(x)) return intern("FUNCTION");
+	if (IS_LAMBDA(x))  return intern("FUNCTION");
+
+	if (IS_STRING(x))  return intern("STRING");
+	if (IS_IO(x))      return intern("IO");
+
+	return intern("NULL");
+}
+
+obj
 load(const char *path, obj env)
 {
 	obj f = io_fopen(path, "r");
 	debug1("loadsys... %s\n", path);
-	if (IS_NIL(f)) debug1("%s - failed to load\n", path);
-	if (IS_NIL(f)) return NIL;
-	eval(readx(f), env);
+	if (IS_NIL(f)) {
+		debug1("%s - failed to load\n", path);
+		return NIL;
+	}
+
+	while (IS_NIL(io_eof(f))) {
+		debug1(" ...\n");
+		eval(readx(f), env);
+	}
+
 	io_close(f);
+	debug1("done... %s\n", path);
 	return T;
 }

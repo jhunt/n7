@@ -5,7 +5,9 @@ static obj ENV = NIL;
 static void
 ok_eval(const char *code, obj expect, const char *msg)
 {
-	if (!msg) { msg = code; }
+	if (!msg) {
+		msg = str("%s -> %s", code, cdump(expect));;
+	}
 
 	obj io = io_string(code);
 	obj form = readx(io);
@@ -170,23 +172,44 @@ test_get_set(void)
 }
 
 static void
+test_combinators(void)
+{
+	WITH_ABORT_PROTECTION {
+		ENV = globals();
+		ok_eval("(K t)", T, NULL);
+		ok_eval("(K nil)", NIL, NULL);
+		ok_eval("(K 42)", fixnum(42), NULL);
+	}
+}
+
+static void
 test_predicates(void)
 {
 	WITH_ABORT_PROTECTION {
 		ENV = globals();
+		ok_eval("(null? nil)", T, NULL);
 		ok_eval("(null? NIL)", T, "`null?` recognizes NIL");
 
+		ok_eval("(null? ())", T, NULL);
 		ok_eval("(null? ())", T, "`null?` recognizes the empty list");
 
+		ok_eval("(null? (car (cdr (list 1))))", T, NULL);
 		ok_eval("(null? (car (cdr (list 1))))", T,
 				"`null?` recognizes the end of list");
 
 		ok_eval("(eq 1 NIL)", NIL, "eq 1 NIL is false");
+		debugging(3);
+		ok_eval("(null? 1)", NIL, NULL);
 		//ok_eval("(null? 1)", NIL,
 		//	"`null?` sees a number as not null");
 
+		ok_eval("(null? (cons 1 2))", NIL, NULL);
 		//ok_eval("(null? (cons 1 2))", NIL,
 		//	"`null?`: cons is not null");
+		//
+
+		ok_eval("(ne 1 2)", T, NULL);
+		ok_eval("(ne 1 1)", NIL, NULL);
 	}
 }
 
@@ -204,6 +227,7 @@ int main(int argc, char **argv)
 	test_lambda();
 	test_get_set();
 
+	test_combinators();
 	test_predicates();
 
 	done_testing();
