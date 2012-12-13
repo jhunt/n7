@@ -163,10 +163,10 @@ test_get_set(void)
 {
 	WITH_ABORT_PROTECTION {
 		ENV = globals();
-		ok_eval("(eql 3 (do (set 'z 3) z))", T,
+		ok_eval("(eql 3 (do (set z 3) z))", T,
 				"set/get works inside of language");
 
-		ok_eval("(eql 8 (do (set 'x 1) (set 'y 6) (+ x y 1)))", T,
+		ok_eval("(eql 8 (do (set x 1) (set y 6) (+ x y 1)))", T,
 				"set/get works with ops");
 	}
 }

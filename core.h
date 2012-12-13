@@ -26,7 +26,7 @@
      [X]  AND
      [X]  OR
      [X]  LAMBDA
-     [/]  SET (setq) <------- implemented as op
+     [X]  SET
      [ ]  MACRO
      [ ]  ENSURE (unwind-protect)
   - layer1 (regular forms coded in C)
@@ -293,7 +293,6 @@ obj op_cons(obj args, obj env);
 obj op_list(obj args, obj env);
 obj op_car(obj args, obj env);
 obj op_cdr(obj args, obj env);
-obj op_set(obj args, obj env);
 
 obj op_prs(obj args, obj env);
 

@@ -1,34 +1,34 @@
-(set 'K
+(set K
   (lambda (x) (do x)))
 
-(set 'not
+(set not
   (lambda (x)
     (eq x nil)))
 
-(set 'null?
+(set null?
   (lambda (x)
     (eq x nil)))
 
-(set 'ne
+(set ne
   (lambda (x y)
     (not (eq x y))))
 
-(set 'is-a?
+(set is-a?
   (lambda (vtype obj)
     (eq vtype (typeof obj))))
 
-(set 'cons?
+(set cons?
   (lambda (obj)
     (is-a? 'cons obj)))
 
-(set 'atom?
+(set atom?
   (lambda (obj)
     (not (cons? obj))))
 
-(set 'caar (lambda (l) (car (car l))))
-(set 'cadr (lambda (l) (car (cdr l))))
-(set 'cdar (lambda (l) (cdr (car l))))
-(set 'cddr (lambda (l) (cdr (cdr l))))
+(set caar (lambda (l) (car (car l))))
+(set cadr (lambda (l) (car (cdr l))))
+(set cdar (lambda (l) (cdr (car l))))
+(set cddr (lambda (l) (cdr (cdr l))))
 
 
 ; vim:ft=lisp:sts=2:ts=2:et

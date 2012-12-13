@@ -32,11 +32,11 @@ test_backquote(void)
 
 		ok_eval("(equal `(x 2 e) '(x 2 e))", T, "backquote works");
 
-		ok_eval("(do (set 'x 1) (set 'y 2) "
+		ok_eval("(do (set x 1) (set y 2) "
 				"(equal `(x ,y) '(x 2)))", T,
 				"backquote unquotes at commas");
 
-		ok_eval("(do (set 'x 1) (set 'y 2) "
+		ok_eval("(do (set x 1) (set y 2) "
 				"(equal `(x ,(+ x y) (+ x y)) "
 					"(list 'x 3 (list '+ 'x 'y))))", T,
 				"backquote+comma works on sublists");

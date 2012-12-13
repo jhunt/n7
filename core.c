@@ -142,7 +142,6 @@ globals(void)
 	set(e, intern("list"),  builtin(op_list));
 	set(e, intern("car"),   builtin(op_car));
 	set(e, intern("cdr"),   builtin(op_cdr));
-	set(e, intern("set"),   builtin(op_set));
 
 	set(e, intern("prs"),   builtin(op_prs));
 
@@ -709,6 +708,14 @@ eval(obj args, obj env)
 			debug1("calling eval again, args = %s\n", cdump(car(args)));
 			return eval(car(args), env);
 
+		/* (set x value) */
+		} else if (head == intern("set")) {
+			debug2("Eval::set\n");
+			/* FIXME: what if arg 1 isn't a sym? */
+			obj v = eval(car(cdr(args)), env);
+			set(env, car(args), v);
+			return v;
+
 		/* (let (x y) (...)) */
 		} else if (head == intern("let")) {
 			debug2("eval::let\n");
@@ -1272,15 +1279,6 @@ op_cdr(obj args, obj env)
 	debug2("+op_cdr\n");
 	/* FIXME: check arity */
 	return cdr(car(args));
-}
-
-obj
-op_set(obj args, obj env)
-{
-	debug2("+op_set\n");
-	/* FIXME: check arity */
-	set(env, car(args), car(cdr(args)));
-	return car(cdr(args));
 }
 
 obj
