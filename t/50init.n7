@@ -1,6 +1,4 @@
 #!./n7i
 (load "sys/test.n7")
-(prs "global test/N is " test/N "\n")
 (ok t "basic ok test")
-(prs "global test/N is " test/N "\n")
 (done)
