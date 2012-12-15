@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "core.h"
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #define print(out,x) io_print(out,vdump(x))
 #define PROMPT() printf("\n> ")
@@ -24,11 +26,25 @@ int main(int argc, char **argv)
 	debugging(dbg);
 	INIT();
 
-	obj in  = io_fdopen(stdin);
-	obj out = io_fdopen(stdout);
-	obj env = globals();
+	int INTERACTIVE = 0;
+	obj in, out, env;
+	if (optind < argc) {
+		debug1("attempting to load %s\n", argv[optind]);
+		in = io_fopen(argv[optind], "r");
+		if (IS_NIL(in)) {
+			fprintf(stderr, "%s: %s\n", argv[optind], strerror(errno));
+			exit(1);
+		}
+		INTERACTIVE = 0;
 
-	fprintf(stdout, "\n   ..::' n7i '::..\n");
+	} else {
+		INTERACTIVE = 1;
+		in  = io_fdopen(stdin);
+		fprintf(stdout, "\n   ..::' n7i '::..\n");
+	}
+	out = io_fdopen(stdout);
+	env = globals();
+
 
 	jmp_buf err;
 	if (setjmp(err) != 0) {
@@ -37,14 +53,17 @@ int main(int argc, char **argv)
 		on_abort(&err);
 	}
 
-	PROMPT();
-	while (!feof(stdin)) {
-		print(
-			out,
-			eval(
-				readx(in),
-				env));
+	obj result;
+
+	if (INTERACTIVE) {
 		PROMPT();
+	}
+	while (IS_NIL(io_eof(in))) {
+		result = eval(readx(in), env);
+		if (INTERACTIVE) {
+			print(out, result);
+			PROMPT();
+		}
 	}
 	return 0;
 }

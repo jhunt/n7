@@ -102,7 +102,8 @@ hash(const char *str, unsigned int lim)
 	return *str % lim;
 }
 
-#define OP_FN(x)    (x)->value.builtin
+#define OP_NAME(x)  (x)->value.builtin.name
+#define OP_FN(x)    (x)->value.builtin.fn
 
 #define FNUM(x)     (x)->value.fixnum
 
@@ -125,40 +126,48 @@ hash(const char *str, unsigned int lim)
 #define L_BODY(l)   (l)->value.lambda.code
 
 
+#define SET_BUILTIN(e,n,op) set((e), intern(n), builtin(n,(op)))
 obj
 globals(void)
 {
 	obj e =  env_init();
-	set(e, intern("+"), builtin(op_add));
-	set(e, intern("-"), builtin(op_sub));
-	set(e, intern("*"), builtin(op_mult));
-	set(e, intern("/"), builtin(op_div));
+	SET_BUILTIN(e, "+", op_add);
+	SET_BUILTIN(e, "-", op_sub);
+	SET_BUILTIN(e, "*", op_mult);
+	SET_BUILTIN(e, "/", op_div);
 
-	set(e, intern("eq"),    builtin(op_eq));
-	set(e, intern("eql"),   builtin(op_eql));
-	set(e, intern("equal"), builtin(op_equal));
+	SET_BUILTIN(e, "eq", op_eq);
+	SET_BUILTIN(e, "eql", op_eql);
+	SET_BUILTIN(e, "equal", op_equal);
 
-	set(e, intern("cons"),  builtin(op_cons));
-	set(e, intern("list"),  builtin(op_list));
-	set(e, intern("car"),   builtin(op_car));
-	set(e, intern("cdr"),   builtin(op_cdr));
+	SET_BUILTIN(e, "cons", op_cons);
+	SET_BUILTIN(e, "list", op_list);
+	SET_BUILTIN(e, "car", op_car);
+	SET_BUILTIN(e, "cdr", op_cdr);
 
-	set(e, intern("prs"),   builtin(op_prs));
+	SET_BUILTIN(e, "prs", op_prs);
 
-	set(e, intern("typeof"), builtin(op_typeof));
+	SET_BUILTIN(e, "typeof", op_typeof);
 
-	set(e, intern("call"),  builtin(op_call));
-	set(e, intern("apply"), builtin(op_apply));
+	SET_BUILTIN(e, "call", op_call);
+	SET_BUILTIN(e, "apply", op_apply);
+
+	SET_BUILTIN(e, "exit", op_exit);
+
+	/* transitional stuff */
+	SET_BUILTIN(e, "load", opx_load);
 
 	load("system.n", e);
 
 	return e;
 }
+#undef SET_BUILTIN
 
 obj
-builtin(op_fn fn)
+builtin(const char *name, op_fn fn)
 {
 	obj op = OBJECT(OBJ_BUILTIN, 0);
+	strncpy(OP_NAME(op), name, 15);
 	OP_FN(op) = fn;
 	return op;
 }
@@ -215,14 +224,26 @@ get(obj env, obj sym)
 obj
 set(obj env, obj sym, obj val)
 {
-	obj x;
-	for_list(x, car(env)) {
-		if (IS_T(eq(car(car(x)), sym))) {
-			/* FIXME: need setcdr! (and setcar) */
-			debug1("set existing %s to %s\n",
-					cdump(sym), cdump(val));
-			CDR(car(x)) = val;
-			return env;
+	obj e, x;
+	/* FIXME: this is WRONG.  we shouldn't recurse
+	   up through the call stack until we find a sym
+	   we like, and set that.  we need the concept of
+	   symbol/variable visibility; i.e. global/local
+	   always visible, closures visible, but the
+	   internals of a caller, not so much... */
+
+	/* FIXME: I think the real problem lies in the
+	   misuse of env as a call-stack.  We need to
+	   split out stack handling from environment. */
+
+	for_list(e, env) {
+		for_list(x, car(e)) {
+			if (IS_T(eq(car(car(x)), sym))) {
+				debug1("set existing %s to %s\n",
+						cdump(sym), cdump(val));
+				CDR(car(x)) = val;
+				return env;
+			}
 		}
 	}
 
@@ -525,7 +546,7 @@ vdump_x(obj str, obj what)
 				break;
 
 			case OBJ_BUILTIN:
-				strf(str, "<#:builtin:%p:#>", what);
+				strf(str, "<#:op:%s:%p:#>", OP_NAME(what), what);
 				break;
 
 			case OBJ_LAMBDA:
@@ -653,8 +674,8 @@ intern(const char *name)
 	if (!name) return NIL;
 
 	char *symname = lc(name);
-	if (strcmp(symname, "nil") == 0) return NIL;
-	if (strcmp(symname, "t") == 0)   return T;
+	if (strcasecmp(symname, "nil") == 0) return NIL;
+	if (strcasecmp(symname, "t") == 0)   return T;
 
 	unsigned int key = hash(symname, SYMBOL_TABLE_SIZE);
 	obj sym = findsym(key, symname);
@@ -1286,7 +1307,19 @@ op_prs(obj args, obj env)
 {
 	debug2("+op_prs\n");
 	obj STDOUT = io_fdopen(stdout);
-	io_write_str(STDOUT, car(args));
+	obj x, s;
+	for_list(x, args) {
+		/* FIXME: this really should move to in-lang */
+		if (IS_STRING(car(x))) {
+			s = car(x);
+		} else if (IS_FIXNUM(car(x))) {
+			s = str_dupf("%i", FNUM(car(x)));
+		} else {
+			/* extra quotes to make gcc stop bitching about ??? trigraphs */
+			s = str_dupc("(?""?""?)");
+		}
+		io_write_str(STDOUT, s);
+	}
 	return T;
 }
 
@@ -1308,6 +1341,26 @@ op_typeof(obj args, obj env)
 	if (IS_IO(x))      return intern("IO");
 
 	return intern("NULL");
+}
+
+obj
+op_exit(obj args, obj env)
+{
+	debug2("+op_exit\n");
+	obj x = car(args);
+	if (IS_NIL(x))     exit(0);
+	if (IS_FIXNUM(x))  exit(FNUM(x));
+	exit(255);
+}
+
+obj
+opx_load(obj args, obj env)
+{
+	debug2("+opx_load\n");
+	if (IS_STRING(car(args))) {
+		return load(STR_VAL(car(args)), env);
+	}
+	abort("called load without a valid path argument");
 }
 
 obj

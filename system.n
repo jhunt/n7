@@ -1,9 +1,10 @@
 (set K
-  (lambda (x) (do x)))
+  (lambda (x)
+    x))
 
 (set not
-  (lambda (x)
-    (eq x nil)))
+  (lambda (test)
+    (eq test nil)))
 
 (set null?
   (lambda (x)
@@ -25,10 +26,24 @@
   (lambda (obj)
     (not (cons? obj))))
 
+(set *N7-DEBUG-LEVEL* 0)
+(set n/debugx
+  (lambda (n msg)
+    (if (nil? msg)
+      (set *N7-DEBUG-LEVEL* n)
+      (if (>= n *N7-DEBUG-LEVEL)
+        (apply 'prs msg)))))
+
 (set caar (lambda (l) (car (car l))))
 (set cadr (lambda (l) (car (cdr l))))
 (set cdar (lambda (l) (cdr (car l))))
 (set cddr (lambda (l) (cdr (cdr l))))
 
+(set ++ (lambda (x) (+ 1 x)))
 
-; vim:ft=lisp:sts=2:ts=2:et
+;(fun nil? (x)
+;     (eq x nil))
+;(fun pr (x)
+;     (prs x)
+;     t)
+

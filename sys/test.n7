@@ -1,0 +1,20 @@
+(set test/N 0)
+
+(set test/ok (lambda (expr str)
+          (do
+            (set test/N (++ test/N))
+            ;; FIXME: prs needs to be able to print numbers
+            (if expr
+              (do
+                (prs "ok " test/N " " str "\n")
+                t)
+              (do
+                (prs "not ok " test/N " " str "\n")
+                nil)))))
+(set done (lambda ()
+            (if (not (equal 0 test/N))
+              (prs "1.." test/N "\n"))))
+
+(set ok test/ok)
+(set is (lambda (a b str)
+          (test/ok (equal a b) str)))

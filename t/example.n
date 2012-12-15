@@ -1,0 +1,29 @@
+(load core:test)
+
+(is "is uses equal"
+  1 (+ 1))
+
+(is (eq 1 1) t)
+
+(is "eval can eval an eval"
+  (eval 1) 1)
+
+(ok (and))
+(ok (and t))
+(ok (and 1))
+(ok (and 0))
+(ok (and 0 1 2))
+(ok (not (and nil))
+(ok (not (and t nil)))
+(ok "nested ANDs"
+  (and 1 (and 2 3) (and 4 (and))))
+
+(ok (or))
+(ok (or t t))
+(ok (or t nil))
+(ok (or nil t))
+(ok "nested ORs"
+  (or (or 1 2) (or nil nil nil (or nil t))))
+
+(ok "nested ANDs + ORs"
+  (not (and (or nil t) (and t nil))))

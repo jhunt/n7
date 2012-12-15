@@ -37,6 +37,11 @@
      [X]  EQ/EQL/EQUAL
      [X]  PRS
      [ ]  TYPEOF
+     [X]  EXIT
+  - layerFOO (transitional things)
+     [X]  LOAD ............. (c)
+     [ ]  N/DEBUG .......... (n7)
+     [ ]  SPRINTF (need for tests)
   - layer2 (regular forms coded in N7)
      [/]  LIST <------------- in C currently
      [/]  CALL <------------- in C currently
@@ -44,6 +49,7 @@
      [ ]  SYMS
      [ ]  LET* [macro on top of LET]
      [ ]  IS? (+ other type predicates)
+     [ ]  FUN 
 
   DATA TYPES
   - vectors
@@ -51,6 +57,9 @@
   - floating point numbers
   - ratios
   - bignums
+
+  STRINGS
+  - numeric formatting
 
   FFI
   - syscall interface
@@ -111,7 +120,10 @@ struct big_object {
 	unsigned short type;
 	union {
 		long fixnum;
-		op_fn builtin;
+		struct {
+			op_fn fn;
+			char name[16];
+		} builtin;
 
 		struct {
 			void *reserved; /* for future expansion */
@@ -197,7 +209,7 @@ unsigned int hash(const char *str, unsigned int lim);
 int type(obj o);
 
 obj globals(void);
-obj builtin(op_fn op);
+obj builtin(const char *name, op_fn op);
 
 obj eq(obj a, obj b);
 obj eql(obj a, obj b);
@@ -297,6 +309,10 @@ obj op_cdr(obj args, obj env);
 obj op_prs(obj args, obj env);
 
 obj op_typeof(obj args, obj env);
+
+obj op_exit(obj args, obj env);
+
+obj opx_load(obj args, obj env);
 
 obj load(const char *path, obj env);
 

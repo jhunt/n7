@@ -1,0 +1,31 @@
+#!./n7i
+(load "sys/test.n7")
+
+;; Basic Equality
+(ok (eq nil nil) "(eq nil nil) -> t")
+(ok (eql nil nil) "(eql nil nil) -> t")
+(ok (equal nil nil) "(equal nil nil) -> t")
+
+;; Basic Predicates
+(ok (nil? nil) "NIL is (nil?)")
+
+;; Basic Math
+
+
+(ok (and) "(and) -> t")
+(ok (and t) "(and t) -> t")
+(ok (and 1) "(and 1) -> t")
+(ok (and 0) "(and 0) -> t")
+(ok (and 0 1 2) "(and 0 1 2) -> t")
+;(ok (not (and nil)) "(and nil) -> nil"))
+;(ok (not (and t nil)) "(and t nil) -> nil"))
+(ok (and t (/ 0 1)) "and short-circuits to avoid DIV/0")
+(ok (and 1 (and 2 3) (and 4 (and))) "nested (and)s")
+
+(ok (not (or)) "(or) -> nil")
+
+(is (K t)     t "(K t) -> t")
+(is (K nil) nil "(K nil) -> nil")
+(is (K 42)   42 "(K 42) -> 42")
+
+(done)

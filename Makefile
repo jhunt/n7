@@ -15,8 +15,14 @@ BINARIES := n7i
 
 all: test $(BINARIES)
 
-test: $(TEST_FILES)
+test: test0 test1
+test0: $(TEST_FILES)
 	prove -o -e '' $+
+
+test1: t/*.n7
+	prove -o -e '' $+
+
+t/%.n7: n7i
 
 coverage:
 	make clean test

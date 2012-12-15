@@ -34,7 +34,8 @@ test_apply(void)
 
 		PLUS = calloc(1, sizeof(bigobj));
 		PLUS->type = OBJ_BUILTIN;
-		PLUS->value.builtin = op_add;
+		strncpy(PLUS->value.builtin.name, "+", 15);
+		PLUS->value.builtin.fn = op_add;
 
 		fixnum_is(op_call(cons(PLUS, args), env), 1111, "op_add via op_call");
 	}
