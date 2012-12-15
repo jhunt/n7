@@ -316,6 +316,7 @@ obj op_prs(obj args, obj env);
 obj op_typeof(obj args, obj env);
 
 obj op_exit(obj args, obj env);
+obj op_dump(obj args, obj env);
 
 obj opx_load(obj args, obj env);
 

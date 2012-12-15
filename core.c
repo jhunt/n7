@@ -156,6 +156,7 @@ globals(void)
 	SET_BUILTIN(e, "apply", op_apply);
 
 	SET_BUILTIN(e, "exit", op_exit);
+	SET_BUILTIN(e, "dump", op_dump);
 
 	/* transitional stuff */
 	SET_BUILTIN(e, "load", opx_load);
@@ -1376,6 +1377,13 @@ op_exit(obj args, obj env)
 	if (IS_NIL(x))     exit(0);
 	if (IS_FIXNUM(x))  exit(FNUM(x));
 	exit(255);
+}
+
+obj
+op_dump(obj args, obj env)
+{
+	debug2("+op_dump\n");
+	return vdump(car(args));
 }
 
 obj
