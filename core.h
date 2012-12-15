@@ -34,6 +34,7 @@
      [X]  CAR
      [X]  CDR
      [X]  <arithmetic ops>
+     [X]  <comparison ops>
      [X]  EQ/EQL/EQUAL
      [X]  PRS
      [ ]  TYPEOF
@@ -294,6 +295,10 @@ obj op_add(obj args, obj env);
 obj op_sub(obj args, obj env);
 obj op_mult(obj args, obj env);
 obj op_div(obj args, obj env);
+
+obj op_gt(obj args, obj env);
+obj op_lt(obj args, obj env);
+
 obj op_call(obj args, obj env);
 obj op_apply(obj args, obj env);
 

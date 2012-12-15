@@ -26,12 +26,17 @@
   (lambda (obj)
     (not (cons? obj))))
 
+(set <= (lambda (x y)
+          (or (eql x y) (< x y))))
+(set >= (lambda (x y)
+          (or (eql x y) (> x y))))
+
 (set *N7-DEBUG-LEVEL* 0)
 (set n/debugx
   (lambda (n msg)
     (if (nil? msg)
       (set *N7-DEBUG-LEVEL* n)
-      (if (>= n *N7-DEBUG-LEVEL)
+      (if (>= n *N7-DEBUG-LEVEL*)
         (apply 'prs msg)))))
 
 (set caar (lambda (l) (car (car l))))
@@ -40,6 +45,7 @@
 (set cddr (lambda (l) (cdr (cdr l))))
 
 (set ++ (lambda (x) (+ 1 x)))
+(set -- (lambda (x) (- 1 x)))
 
 ;(fun nil? (x)
 ;     (eq x nil))

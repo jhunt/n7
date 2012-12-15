@@ -136,6 +136,9 @@ globals(void)
 	SET_BUILTIN(e, "*", op_mult);
 	SET_BUILTIN(e, "/", op_div);
 
+	SET_BUILTIN(e, ">", op_gt);
+	SET_BUILTIN(e, "<", op_lt);
+
 	SET_BUILTIN(e, "eq", op_eq);
 	SET_BUILTIN(e, "eql", op_eql);
 	SET_BUILTIN(e, "equal", op_equal);
@@ -1197,6 +1200,28 @@ op_div(obj args, obj env)
 		acc /= FNUM(car(term));
 	}
 	return fixnum(acc);
+}
+
+obj
+op_gt(obj args, obj env)
+{
+	obj x = car(args);
+	obj y = car(cdr(args));
+	if (IS_FIXNUM(x) && IS_FIXNUM(y)) {
+		return (FNUM(x) > FNUM(y) ? T : NIL);
+	}
+	abort("non-numeric gt (>) comparison");
+}
+
+obj
+op_lt(obj args, obj env)
+{
+	obj x = car(args);
+	obj y = car(cdr(args));
+	if (IS_FIXNUM(x) && IS_FIXNUM(y)) {
+		return (FNUM(x) < FNUM(y) ? T : NIL);
+	}
+	abort("non-numeric lt (<) comparison");
 }
 
 obj
