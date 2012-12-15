@@ -50,7 +50,7 @@
      [ ]  SYMS
      [ ]  LET* [macro on top of LET]
      [ ]  IS? (+ other type predicates)
-     [ ]  FUN 
+     [ ]  FUN
 
   DATA TYPES
   - vectors
