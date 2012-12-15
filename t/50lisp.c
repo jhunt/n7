@@ -187,18 +187,6 @@ test_predicates(void)
 {
 	WITH_ABORT_PROTECTION {
 		ENV = globals();
-		ok_eval("(null? 288)", NIL, NULL);
-		ok_eval("(eq nil nil)", T, NULL);
-		ok_eval("(eq NIL nil)", T, NULL);
-		ok_eval("(null? nil)", T, NULL);
-
-		ok_eval("(eq () nil)", T, NULL);
-		ok_eval("(null? ())", T, NULL);
-		ok_eval("(eq (car (cdr (list 1))) nil)", T, NULL);
-		ok_eval("(null? (car (cdr (list 1))))", T, NULL);
-
-		ok_eval("(eq 1 nil)", NIL, "eq 1 NIL is false");
-		ok_eval("(null? 1)", NIL, NULL);
 		ok_eval("(ne 'x 'y)", T, NULL);
 		ok_eval("(ne 'x 'x)", NIL, NULL);
 		ok_eval("(not (eq 'x 'x))", NIL, NULL);

@@ -1,0 +1,61 @@
+#!./n7i
+(load "sys/test.n7")
+
+;; dummy function, for type predicate tests
+(set F (lambda (x) (+ 1 x)))
+
+;; cons?
+(ok (not (cons? 1)) "(cons? 1) -> nil")
+(ok (not (cons? nil)) "(cons? nil) -> nil")
+(ok (not (cons? "string")) "(cons? \"string\") -> nil")
+(ok (not (cons? F)) "(cons? <lambda>) -> nil")
+(ok (not (cons? 'sym)) "(cons? 'sym) -> nil")
+(ok (cons? (cons 1 2)) "(cons? (cons 1 2)) -> t") 
+(ok (cons? (list 1 2 3)) "(cons? (list 1 2 3))) -> t")
+
+;; atom?
+(ok (atom? 1) "(atom? 1) -> t")
+(ok (atom? nil) "(atom? nil) -> t")
+(ok (atom? "string") "(atom? \"string\") -> t")
+(ok (atom? F) "(atom? <lambda>) -> t")
+(ok (atom? 'sym) "(atom? 'sym) -> t")
+(ok (not (atom? (cons 1 2))) "(atom? (cons 1 2)) -> nil") 
+(ok (not (atom? (list 1 2 3))) "(atom? (list 1 2 3))) -> nil")
+
+;; fn?
+(ok (not (fn? 1)) "(fn? 1) -> nil")
+(ok (not (fn? nil)) "(fn? nil) -> nil")
+(ok (not (fn? "string")) "(fn? \"string\") -> nil")
+(ok (fn? F) "(fn? <lambda>) -> t")
+(ok (not (fn? 'sym)) "(fn? 'sym) -> nil")
+(ok (not (fn? (cons 1 2))) "(fn? (cons 1 2)) -> nil") 
+(ok (not (fn? (list 1 2 3))) "(fn? (list 1 2 3))) -> nil")
+
+;; num?
+(ok (num? 1) "(num? 1) -> t")
+(ok (not (num? nil)) "(num? nil) -> nil")
+(ok (not (num? "string")) "(num? \"string\") -> nil")
+(ok (not (num? F)) "(num? <lambda>) -> nil")
+(ok (not (num? 'sym)) "(num? 'sym) -> nil")
+(ok (not (num? (cons 1 2))) "(num? (cons 1 2)) -> nil") 
+(ok (not (num? (list 1 2 3))) "(num? (list 1 2 3))) -> nil")
+
+;; sym?
+(ok (not (sym? 1)) "(sym? 1) -> nil")
+(ok (not (sym? nil)) "(sym? nil) -> nil")
+(ok (not (sym? "string")) "(sym? \"string\") -> nil")
+(ok (not (sym? F)) "(sym? <lambda>) -> nil")
+(ok (sym? 'sym) "(sym? 'sym) -> t")
+(ok (not (sym? (cons 1 2))) "(sym? (cons 1 2)) -> nil") 
+(ok (not (sym? (list 1 2 3))) "(sym? (list 1 2 3))) -> nil")
+
+;; string?
+(ok (not (string? 1)) "(string? 1) -> nil")
+(ok (not (string? nil)) "(string? nil) -> nil")
+(ok (string? "string") "(string? \"string\") -> t")
+(ok (not (string? F)) "(string? <lambda>) -> nil")
+(ok (not (string? 'sym)) "(string? 'sym) -> nil")
+(ok (not (string? (cons 1 2))) "(string? (cons 1 2)) -> nil") 
+(ok (not (string? (list 1 2 3))) "(string? (list 1 2 3))) -> nil")
+
+(done)

@@ -1,13 +1,19 @@
 #!./n7i
 (load "sys/test.n7")
 
-;; Basic Equality
+;; Basic Equality - nil
 (ok (eq nil nil) "(eq nil nil) -> t")
 (ok (eql nil nil) "(eql nil nil) -> t")
 (ok (equal nil nil) "(equal nil nil) -> t")
 
+(ok (not (eq nil 1)), "(eq nil 1) -> nil")
+(ok (eq nil '()) "(eq nil '()) -> t")
+
 ;; Basic Predicates
-(ok (nil? nil) "NIL is (nil?)")
+(ok (not (nil? 288)), "(nil? 288) -> nil")
+(ok (nil? nil) "(nil? nil) -> t")
+(ok (nil? '()) "(nil? '()) -> t")
+(ok (nil? (car (cdr (list 1)))), "end of list is nil?")
 
 ;; Basic Math
 

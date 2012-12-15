@@ -6,7 +6,7 @@
   (lambda (test)
     (eq test nil)))
 
-(set null?
+(set nil?
   (lambda (x)
     (eq x nil)))
 
@@ -25,6 +25,22 @@
 (set atom?
   (lambda (obj)
     (not (cons? obj))))
+
+(set fn?
+  (lambda (obj)
+    (is-a? 'function obj)))
+
+(set sym?
+  (lambda (obj)
+    (is-a? 'symbol obj)))
+
+(set num?
+  (lambda (obj)
+    (is-a? 'fixnum obj)))
+
+(set string?
+  (lambda (obj)
+    (is-a? 'string obj)))
 
 (set <= (lambda (x y)
           (or (eql x y) (< x y))))

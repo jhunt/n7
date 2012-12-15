@@ -45,17 +45,16 @@ int main(int argc, char **argv)
 	out = io_fdopen(stdout);
 	env = globals();
 
-
 	jmp_buf err;
-	if (setjmp(err) != 0) {
-		printf("aborted.  retrying...\n");
-	} else {
-		on_abort(&err);
-	}
-
 	obj result;
 
 	if (INTERACTIVE) {
+		if (setjmp(err) != 0) {
+			printf("aborted.  retrying...\n");
+		} else {
+			on_abort(&err);
+		}
+
 		PROMPT();
 	}
 	while (IS_NIL(io_eof(in))) {
