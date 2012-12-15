@@ -157,7 +157,7 @@ globals(void)
 	/* transitional stuff */
 	SET_BUILTIN(e, "load", opx_load);
 
-	load("system.n", e);
+	load("sys/core.n7", e);
 
 	return e;
 }

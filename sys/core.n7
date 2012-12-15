@@ -46,4 +46,7 @@
 ;(fun pr (x)
 ;     (prs x)
 ;     t)
-
+;(macro fn (name args &body body)
+;  `(set ,name (lambda ,args (do ,body))))
+;(fn ++ (x)
+;  (+ 1 x))
