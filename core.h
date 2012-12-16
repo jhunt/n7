@@ -37,7 +37,7 @@
      [X]  <comparison ops>
      [X]  EQ/EQL/EQUAL
      [X]  PRS
-     [ ]  TYPEOF
+     [X]  TYPEOF
      [X]  EXIT
   - layerFOO (transitional things)
      [X]  LOAD ............. (c)
