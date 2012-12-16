@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 		PROMPT();
 	}
 	while (IS_NIL(io_eof(in))) {
-		result = eval(readx(in), env);
+		result = eval(readx(in, env), env);
 		if (INTERACTIVE) {
 			print(out, result);
 			PROMPT();

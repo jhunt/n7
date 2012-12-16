@@ -10,7 +10,7 @@ ok_eval(const char *code, obj expect, const char *msg)
 	}
 
 	obj io = io_string(code);
-	obj form = readx(io);
+	obj form = readx(io, ENV);
 
 	obj result = eval(form, ENV);
 	if (IS_T(equal(result, expect))) {

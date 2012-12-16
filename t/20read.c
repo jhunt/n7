@@ -3,6 +3,7 @@
 #include "assert.h"
 
 extern char *next_token(obj io);
+static obj ENV = NIL;
 
 static void
 string_is(const char *got, const char *expect, const char *msg)
@@ -37,7 +38,7 @@ static obj
 read_from(const char *path)
 {
 	obj io = open_file(path);
-	obj result = readx(io);
+	obj result = readx(io, ENV);
 	io_close(io);
 	return result;
 }
@@ -103,7 +104,7 @@ test_token_limits(void)
 {
 	WITH_ABORT_PROTECTION {
 		obj io = io_string(LONG_TOKEN_NAME);
-		obj sym = readx(io);
+		obj sym = readx(io, ENV);
 		ok(strcmp(sym->value.sym.name, LONG_TOKEN_NAME) == 0,
 			"symbol names not truncated during read");
 	}
@@ -115,14 +116,14 @@ test_reader(void)
 	WITH_ABORT_PROTECTION {
 		obj io, x;
 
-		io = io_string("20\n"); x = readx(io);
+		io = io_string("20\n"); x = readx(io, ENV);
 		if (IS_FIXNUM(x)) {
 			fixnum_is(x, 20, "read 20 as a fixnum");
 		} else {
 			fail("read 20 as a fixnum");
 		}
 
-		io = io_string("symbolix\n"); x = readx(io);
+		io = io_string("symbolix\n"); x = readx(io, ENV);
 		if (IS_SYMBOL(x)) {
 			ok(x == intern("symbolix"), "read 'symbolix");
 		} else {
@@ -130,22 +131,22 @@ test_reader(void)
 			fail("read 'symbolix as a symbol");
 		}
 
-		io = io_string("nil\n"); x = readx(io);
+		io = io_string("nil\n"); x = readx(io, ENV);
 		ok(IS_NIL(x), "read nil as NIL value");
 
-		io = io_string("t\n"); x = readx(io);
+		io = io_string("t\n"); x = readx(io, ENV);
 		ok(IS_T(x), "read t as T value");
 
 		io = io_string("; these are comments\n\t; ending in a T value\n  t\n");
-		x = readx(io);
+		x = readx(io, ENV);
 		ok(IS_T(x), "read through the comments");
 
 		io = io_string("          \n\t\r\n\n\nt\n\n   \n");
-		x = readx(io);
+		x = readx(io, ENV);
 		ok(IS_T(x), "read through the whitespace");
 
 		io = io_string("; nothing but comments, until EOF\n");
-		x = readx(io);
+		x = readx(io, ENV);
 		ok(IS_NIL(x), "got nil when reading to EOF (end comments)");
 	}
 }
@@ -155,8 +156,8 @@ form_eq(const char *got, const char *exp, const char *msg)
 {
 	obj form1, form2;
 
-	form1 = readx(io_string(got));
-	form2 = readx(io_string(exp));
+	form1 = readx(io_string(got), ENV);
+	form2 = readx(io_string(exp), ENV);
 
 	obj_equal(form1, form2, msg);
 }
@@ -183,42 +184,42 @@ test_reader_lists(void)
 		obj lst, expect;
 		obj str;
 
-		io = io_string("()"); lst = readx(io);
+		io = io_string("()"); lst = readx(io, ENV);
 		ok(IS_NIL(lst), "() == nil");
 
-		io = io_string("(x)"); lst = readx(io);
+		io = io_string("(x)"); lst = readx(io, ENV);
 		expect = cons(x, NIL);
 		obj_equal(lst, expect, "read (x)");
 
-		io = io_string("(x y)"); lst = readx(io);
+		io = io_string("(x y)"); lst = readx(io, ENV);
 		expect = cons(x, cons(y, NIL));
 		obj_equal(lst, expect, "read (x y)");
 
-		io = io_string("(x y z)"); lst = readx(io);
+		io = io_string("(x y z)"); lst = readx(io, ENV);
 		expect = cons(x, cons(y, cons(z, NIL)));
 		obj_equal(lst, expect, "read (x y z)");
 
-		io = io_string("(x (y) z)"); lst = readx(io);
+		io = io_string("(x (y) z)"); lst = readx(io, ENV);
 		expect = cons(x, cons( cons(y, NIL), cons(z, NIL)));
 		obj_equal(lst, expect, "read (x (y) z)");
 
-		io = io_string("(x . NIL)"); lst = readx(io);
+		io = io_string("(x . NIL)"); lst = readx(io, ENV);
 		expect = cons(x, NIL);
 		obj_equal(lst, expect, "read (x . NIL)");
 
-		io = io_string("(x . y)"); lst = readx(io);
+		io = io_string("(x . y)"); lst = readx(io, ENV);
 		expect = cons(x, y);
 		obj_equal(lst, expect, "read (x . y)");
 
-		io = io_string("(x . (y . (z . NIL)))"); lst = readx(io);
+		io = io_string("(x . (y . (z . NIL)))"); lst = readx(io, ENV);
 		expect = cons(x, cons(y, cons(z, NIL)));
 		obj_equal(lst, expect, "read (x . (y . (z . NIL)))");
 
-		io = io_string("(x . ( y . z))"); lst = readx(io);
+		io = io_string("(x . ( y . z))"); lst = readx(io, ENV);
 		expect = cons(x, cons(y, z));
 		obj_equal(lst, expect, "read (x . (y . z))");
 
-		io = io_string("\"test string\""); str = readx(io);
+		io = io_string("\"test string\""); str = readx(io, ENV);
 		vstring_is(str, "test string", "read \"test string\"");
 
 		str = read_from("t/read/tldr");
@@ -259,13 +260,14 @@ test_reader_string_escapes(void)
 	int i;
 	for (i = 0; tests[i].in; i++) {
 		io = io_string(tests[i].in);
-		obj_equal(readx(io), str_dupc(tests[i].out), tests[i].msg);
+		obj_equal(readx(io, ENV), str_dupc(tests[i].out), tests[i].msg);
 	}
 }
 
 int main(int argc, char **argv)
 {
 	INIT();
+	ENV = globals();
 
 	test_tokenizer();
 	test_token_limits();

@@ -17,7 +17,7 @@ test_eval(void)
 		ok(eval(str, env) == str, "(eval \"test\") self-evaluates");
 
 		obj sym = intern("x");
-		set(env, sym, fixnum(42));
+		setv(env, sym, fixnum(42));
 		ok(IS_T(eql(eval(sym, env), fixnum(42))), "(eval x) causes symbol lookup");
 	}
 }

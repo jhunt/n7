@@ -99,6 +99,8 @@
 #define OBJ_STRING       0x05
 #define OBJ_IO           0x06
 #define OBJ_LAMBDA       0x07
+#define OBJ_MACRO        0x08
+#define OBJ_ENV          0x09
 
 static const char *OBJ_TYPE_NAMES[] = {
 	"SPECIAL",
@@ -109,6 +111,8 @@ static const char *OBJ_TYPE_NAMES[] = {
 	"STRING",
 	"IO",
 	"LAMBDA",
+	"MACRO",
+	"ENV",
 	NULL
 };
 
@@ -153,9 +157,20 @@ struct big_object {
 		} io;
 
 		struct {
-			obj code;
 			obj params;
+			obj code;
 		} lambda;
+
+		/* a macro is a lambda at compile time! */
+		struct {
+			obj params;
+			obj body;
+		} macro;
+
+		struct {
+			obj macros;
+			obj values;
+		} env;
 
 	} value;
 };
@@ -220,11 +235,13 @@ obj equal(obj a, obj b);
 obj env_init(void);
 obj env_new(obj env);
 obj env_del(obj env);
-obj get(obj env, obj sym);
-obj set(obj env, obj sym, obj val);
+obj getv(obj env, obj sym);
+obj setv(obj env, obj sym, obj val);
+obj getm(obj env, obj sym);
+obj setm(obj env, obj sym, obj val);
 
 /* read... */
-obj readx(obj io);
+obj readx(obj io, obj env);
 obj vdump(obj what);
 char* cdump(obj what);
 
@@ -234,6 +251,8 @@ obj car(obj cons);
 obj cdr(obj cons);
 obj revl(obj lst);
 obj nlist(size_t n, ...);
+obj assoc(obj key, obj alist);
+obj acons(obj key, obj val, obj alist);
 #define push(ls,v) (ls) = cons((v),(ls))
 #define for_list(obj, list) \
 	for (obj = (list); !IS_NIL(obj); obj = cdr(obj))

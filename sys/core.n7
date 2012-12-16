@@ -1,3 +1,10 @@
+; (fn +1 (x) (+ x 1))
+(macro fn (name args body)
+       `(set ,name
+             (lambda
+               ,args
+               ,body)))
+
 (set K
   (lambda (x)
     x))

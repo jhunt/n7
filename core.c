@@ -125,8 +125,14 @@ hash(const char *str, unsigned int lim)
 #define L_PARAMS(l) (l)->value.lambda.params
 #define L_BODY(l)   (l)->value.lambda.code
 
+#define M_PARAMS(m) (m)->value.macro.params
+#define M_BODY(m)   (m)->value.macro.body
 
-#define SET_BUILTIN(e,n,op) set((e), intern(n), builtin(n,(op)))
+#define ENV_M(e)    (e)->value.env.macros
+#define ENV_V(e)    (e)->value.env.values
+
+#define SET_BUILTIN(e,n,op) setv((e), intern(n), builtin(n,(op)))
+
 obj
 globals(void)
 {
@@ -212,10 +218,10 @@ equal(obj a, obj b)
 /**************************************************/
 
 obj
-get(obj env, obj sym)
+getv(obj env, obj sym)
 {
 	obj level, x;
-	for_list(level, env) {
+	for_list(level, ENV_V(env)) {
 		for_list(x, car(level)) {
 			if (IS_T(eq(car(car(x)), sym))) {
 				return cdr(car(x));
@@ -226,7 +232,7 @@ get(obj env, obj sym)
 }
 
 obj
-set(obj env, obj sym, obj val)
+setv(obj env, obj sym, obj val)
 {
 	obj e, x;
 	/* FIXME: this is WRONG.  we shouldn't recurse
@@ -240,7 +246,7 @@ set(obj env, obj sym, obj val)
 	   misuse of env as a call-stack.  We need to
 	   split out stack handling from environment. */
 
-	for_list(e, env) {
+	for_list(e, ENV_V(env)) {
 		for_list(x, car(e)) {
 			if (IS_T(eq(car(car(x)), sym))) {
 				debug1("set existing %s to %s\n",
@@ -253,10 +259,20 @@ set(obj env, obj sym, obj val)
 
 	debug1("set new %s to %s\n",
 			cdump(sym), cdump(val));
-	CAR(env) = cons(
-		cons(sym, val),
-		car(env)
-	);
+	CAR(ENV_V(env)) = acons(sym, val, car(ENV_V(env)));
+	return env;
+}
+
+obj
+getm(obj env, obj sym)
+{
+	return assoc(sym, ENV_M(env));
+}
+
+obj
+setm(obj env, obj sym, obj val)
+{
+	ENV_M(env) = acons(sym, val, ENV_M(env));
 	return env;
 }
 
@@ -274,23 +290,26 @@ set(obj env, obj sym, obj val)
 obj
 env_init(void)
 {
-	return cons(NIL, NIL);
+	obj env = OBJECT(OBJ_ENV, 0);
+	ENV_M(env) = cons(NIL, NIL);
+	ENV_V(env) = cons(NIL, NIL);
+	return env;
 }
 
 obj
 env_new(obj env)
 {
-	obj oldtop = cons(car(env), cdr(env));
-	CDR(env) = oldtop;
-	CAR(env) = NIL;
+	obj oldtop = cons(car(ENV_V(env)), cdr(ENV_V(env)));
+	CDR(ENV_V(env)) = oldtop;
+	CAR(ENV_V(env)) = NIL;
 	return env;
 }
 
 obj
 env_del(obj env)
 {
-	CAR(env) = car(cdr(env));
-	CDR(env) = cdr(cdr(env));
+	CAR(ENV_V(env)) = car(cdr(ENV_V(env)));
+	CDR(ENV_V(env)) = cdr(cdr(ENV_V(env)));
 	return env;
 }
 
@@ -384,21 +403,21 @@ again:
 }
 
 static obj
-read_list(obj io)
+read_list(obj io, obj env)
 {
 	size_t nread = 1;
 	obj first, next, rest;
-	first = next = readx(io);
+	first = next = readx(io, env);
 
 	if (next == CLOSE_PAREN) return NIL;
 	if (next == CONS_DOT) abort("invalid form starting with (.");
 
 	obj lst = NIL;
-	for (; next != CLOSE_PAREN; next = readx(io)) {
+	for (; next != CLOSE_PAREN; next = readx(io, env)) {
 		if (next == CONS_DOT) {
 			if (nread == 1) {
-				rest = readx(io);
-				if (readx(io) == CLOSE_PAREN)
+				rest = readx(io, env);
+				if (readx(io, env) == CLOSE_PAREN)
 					return cons(first, rest);
 			}
 			abort("abuse of dotted notation!");
@@ -414,7 +433,7 @@ static int QQ = 0;
 static int QQ_ESC = 0;
 
 obj
-readx(obj io)
+readx(obj io, obj env)
 {
 	char *token, c;
 	obj val;
@@ -450,7 +469,7 @@ again:
 			break;
 
 		case '(':
-			val = read_list(io);
+			val = read_list(io, env);
 			if (QQ && !QQ_ESC) {
 				val = cons(intern("list"), val);
 			}
@@ -469,16 +488,16 @@ again:
 			break;
 
 		case '\'':
-			val = cons(intern("quote"), cons(readx(io), NIL));
+			val = cons(intern("quote"), cons(readx(io, env), NIL));
 			break;
 
 		case '`': // `(a ,x b ,y (c ,z)) -> ('a x 'b y ('c z))
 		          // (list 'a x 'b y (list 'c z))
-			QQ = 1; val = readx(io); QQ = 0;
+			QQ = 1; val = readx(io, env); QQ = 0;
 			break;
 
 		case ',':
-			QQ_ESC = 1; val = readx(io); QQ_ESC = 0;
+			QQ_ESC = 1; val = readx(io, env); QQ_ESC = 0;
 			break;
 
 		case ';':
@@ -638,6 +657,24 @@ nlist(size_t n, ...)
 }
 
 obj
+assoc(obj key, obj alist)
+{
+	obj x;
+	for_list(x, alist) {
+		if (equal(key, car(car(x)))) {
+			return cdr(car(x));
+		}
+	}
+	return NIL;
+}
+
+obj
+acons(obj key, obj val, obj alist)
+{
+	return cons(cons(key, val), alist);
+}
+
+obj
 fixnum(long n)
 {
 	obj fixn = OBJECT(OBJ_FIXNUM, 0);
@@ -708,7 +745,7 @@ eval(obj args, obj env)
 
 	/* symbol lookup */
 	if (IS_SYMBOL(args)) {
-		obj val = get(env, args);
+		obj val = getv(env, args);
 		val = DEF(val) ? val : NIL;
 		debug2("lookup %s == %s\n", cdump(args), cdump(val));
 		return val;
@@ -738,7 +775,7 @@ eval(obj args, obj env)
 			debug2("Eval::set\n");
 			/* FIXME: what if arg 1 isn't a sym? */
 			obj v = eval(car(cdr(args)), env);
-			set(env, car(args), v);
+			setv(env, car(args), v);
 			return v;
 
 		/* (let (x y) (...)) */
@@ -799,10 +836,13 @@ eval(obj args, obj env)
 			L_BODY(l)   = car(cdr(args));
 			return l;
 
-		/* (macro name (args) replacement) -> ... */
-		} else if (head == intern("macro")) {
+		/* (macro name (args) body of forms) -> ... */
+		} else if (head == intern("macro")) { /* FIXME: this should go in readx */
 			debug2("eval::macro\n");
-			return NIL; /* FIXME: TODO */
+			obj m = OBJECT(OBJ_MACRO, 0);
+			M_PARAMS(m) = car(args);
+			M_BODY(m)   = car(cdr(args));
+			return m;
 
 		/* normal function application */
 		} else {
@@ -1252,10 +1292,8 @@ op_apply(obj args, obj env)
 		     !IS_NIL(a) && !IS_NIL(p);
 		     a = cdr(a), p = cdr(p)) {
 
-			set(env, car(p), car(a));
+			setv(env, car(p), car(a));
 		}
-		debug1("apply:calling lambda with e: %s\n", cdump(env));
-		debug1("apply:lambda code is... %s\n", cdump(L_BODY(fn)));
 		obj v = eval(L_BODY(fn), env);
 		env_del(env);
 		debug1("RETURN %s\n", cdump(v));
@@ -1408,7 +1446,7 @@ load(const char *path, obj env)
 
 	while (IS_NIL(io_eof(f))) {
 		debug1(" ...\n");
-		eval(readx(f), env);
+		eval(readx(f, env), env);
 	}
 
 	io_close(f);

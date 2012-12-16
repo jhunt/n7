@@ -20,29 +20,29 @@ test_symbols(void)
 }
 
 static void
-test_get_set(void)
+test_getv_setv(void)
 {
 	WITH_ABORT_PROTECTION {
 		obj x = intern("x");
 		obj y = intern("y");
 
 		obj e = env_init();
-		isnt_defined(get(e,x), "e[x] is undefined");
-		isnt_defined(get(e,y), "e[y] is undefined");
+		isnt_defined(getv(e,x), "e[x] is undefined");
+		isnt_defined(getv(e,y), "e[y] is undefined");
 
-		set(e,x,fixnum(42));
-		is_defined(get(e,x), "e[x] is defined");
-		isnt_defined(get(e,y), "e[y] is not defined");
-		obj_equal(get(e,x), fixnum(42), "x is set to 42");
+		setv(e,x,fixnum(42));
+		is_defined(getv(e,x), "e[x] is defined");
+		isnt_defined(getv(e,y), "e[y] is not defined");
+		obj_equal(getv(e,x), fixnum(42), "x is set to 42");
 
-		set(e,y,get(e,x)); /* (set y x) */
-		is_defined(get(e,x), "x persists");
-		is_defined(get(e,y), "y is set now");
-		obj_equal(get(e,y), fixnum(42), "y is also set to 42");
+		setv(e,y,getv(e,x)); /* (set y x) */
+		is_defined(getv(e,x), "x persists");
+		is_defined(getv(e,y), "y is set now");
+		obj_equal(getv(e,y), fixnum(42), "y is also set to 42");
 
-		set(e,x,str_dupc("hi"));
-		obj_equal(get(e,x), str_dupc("hi"), "x is now set to the string 'hi'");
-		obj_equal(get(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
+		setv(e,x,str_dupc("hi"));
+		obj_equal(getv(e,x), str_dupc("hi"), "x is now set to the string 'hi'");
+		obj_equal(getv(e,y), fixnum(42), "y is still set to 42, unaffected by (set x \"hi\")");
 	}
 }
 
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	INIT();
 
 	test_symbols();
-	test_get_set();
+	test_getv_setv();
 
 	test_car_cdr();
 	test_list_op_aborts();
