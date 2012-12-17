@@ -15,7 +15,6 @@
 
   LISP ESSENTIALS
   - funcall stack
-  - macro handling
   - &rest handling in lambda / macro
   - layer0 (special forms - eval)
      [X]  QUOTE
@@ -27,7 +26,7 @@
      [X]  OR
      [X]  LAMBDA
      [X]  SET
-     [ ]  MACRO
+     [X]  MACRO
      [ ]  ENSURE (unwind-protect)
   - layer1 (regular forms coded in C)
      [X]  CONS
@@ -41,7 +40,7 @@
      [X]  EXIT
   - layerFOO (transitional things)
      [X]  LOAD ............. (c)
-     [ ]  N/DEBUG .......... (n7)
+     [X]  N/DEBUG .......... (n7)
      [ ]  SPRINTF (need for tests)
   - layer2 (regular forms coded in N7)
      [/]  LIST <------------- in C currently
@@ -49,8 +48,8 @@
      [/]  APPLY <------------ in C currently
      [ ]  SYMS
      [ ]  LET* [macro on top of LET]
-     [ ]  IS? (+ other type predicates)
-     [ ]  FUN
+     [X]  IS-A? (+ other type predicates)
+     [X]  FN
 
   DATA TYPES
   - vectors
@@ -58,9 +57,6 @@
   - floating point numbers
   - ratios
   - bignums
-
-  STRINGS
-  - numeric formatting
 
   FFI
   - syscall interface

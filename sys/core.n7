@@ -22,6 +22,9 @@
 (fn cons? (obj)
     (is-a? 'cons obj))
 
+(fn list? (obj)
+    (or (nil? obj) (cons? obj)))
+
 (fn atom? (obj)
     (not (cons? obj)))
 
@@ -33,9 +36,11 @@
 
 (fn num? (obj)
     (is-a? 'fixnum obj))
+;; int? float? ratio? real? complex?
 
 (fn string? (obj)
     (is-a? 'string obj))
+;; char?
 
 (fn <= (x y)
     (or (eql x y) (< x y)))
@@ -57,13 +62,3 @@
 
 (fn ++ (x) (+ 1 x))
 (fn -- (x) (- 1 x))
-
-;(fun nil? (x)
-;     (eq x nil))
-;(fun pr (x)
-;     (prs x)
-;     t)
-;(macro fn (name args &body body)
-;  `(set ,name (lambda ,args (do ,body))))
-;(fn ++ (x)
-;  (+ 1 x))
