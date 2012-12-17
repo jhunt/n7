@@ -62,3 +62,11 @@
 
 (fn ++ (x) (+ 1 x))
 (fn -- (x) (- 1 x))
+
+(fn say (&rest msg)
+    (if (nil? msg)
+      (prs "\n")
+      (do
+        (prs (car msg))
+        ;)))
+        (apply say (cdr msg)))))

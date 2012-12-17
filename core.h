@@ -15,7 +15,7 @@
 
   LISP ESSENTIALS
   - funcall stack
-  - &rest handling in lambda / macro
+  - &rest handling in -lambda- / macro (need ,@ support in macro)
   - layer0 (special forms - eval)
      [X]  QUOTE
      [X]  EVAL

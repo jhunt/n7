@@ -772,6 +772,29 @@ intern(const char *name)
 
 /**  Evaluation  ************************************************/
 
+static obj
+_argv(obj params, obj args)
+{
+	obj alist = NIL, p = params, a = args;
+	while (!IS_NIL(p)) {
+		debug1("p == %s\n", cdump(p));
+		debug1("a == %s\n", cdump(a));
+		/* &rest sigil */
+		if (car(p) == intern("&rest")) {
+			debug1("found &rest\n");
+			p = cdr(p);
+			alist = acons(car(p), a, alist);
+			break;
+		}
+
+		/* default mapping */
+		alist = acons(car(p), car(a), alist);
+		p = cdr(p); a = cdr(a);
+	}
+	debug1("alist == %s\n", cdump(alist));
+	return alist;
+}
+
 obj
 eval(obj args, obj env)
 {
@@ -1382,7 +1405,6 @@ op_apply(obj args, obj env)
 	debug2("+op_apply\n");
 	obj fn = car(args);
 	args = car(cdr(args));
-	debug1("applying %s with args %s\n", cdump(fn), cdump(args));
 
 	if (!fn) abort("fn cannot be NULL");
 	if (IS_BUILTIN(fn)) {
@@ -1391,6 +1413,9 @@ op_apply(obj args, obj env)
 	} else if (IS_LAMBDA(fn)) {
 		debug1("apply:lambda code is... %s\n", cdump(L_BODY(fn)));
 		env_new(env);
+		CAR(ENV_V(env)) = _argv(L_PARAMS(fn), args);
+
+		/*
 		obj a, p;
 		for (a = args, p = L_PARAMS(fn);
 		     !IS_NIL(a) && !IS_NIL(p);
@@ -1398,6 +1423,7 @@ op_apply(obj args, obj env)
 
 			setv(env, car(p), car(a));
 		}
+		*/
 		obj v = eval(L_BODY(fn), env);
 		env_del(env);
 		debug1("RETURN %s\n", cdump(v));
