@@ -10,19 +10,18 @@ LDFLAGS := -fprofile-arcs
 LCOV := lcov --directory . --base-directory .
 GENHTML := genhtml --prefix $(shell dirname `pwd`)
 
-TEST_FILES := $(shell find t -name '*.c' | grep -v 'assert.c' | sort | sed -e 's/.c$$/.t/')
+TEST0_FILES := $(shell find t -name '*.c' | grep -v 'assert.c' | sort | sed -e 's/.c$$/.t/')
+TEST1_FILES := $(shell find t -name '*.n7')
 BINARIES := n7i
 
 all: test $(BINARIES)
 
 test: test0 test1
-test0: $(TEST_FILES)
-	prove -o -e '' $+
+test0: $(TEST0_FILES)
+	prove -o -e '' $(TEST0_FILES)
 
-test1: t/*.n7
-	prove -o -e '' $+
-
-t/%.n7: n7i
+test1: n7i $(TEST1_FILES)
+	prove -o -e '' $(TEST1_FILES)
 
 coverage:
 	make clean test
