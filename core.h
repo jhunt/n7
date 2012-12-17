@@ -252,6 +252,7 @@ obj cdr(obj cons);
 obj revl(obj lst);
 obj nlist(size_t n, ...);
 obj assoc(obj key, obj alist);
+obj assocp(obj key, obj alist);
 obj acons(obj key, obj val, obj alist);
 #define push(ls,v) (ls) = cons((v),(ls))
 #define for_list(obj, list) \
@@ -262,8 +263,9 @@ obj fixnum(long n);
 /* symbol manipulation */
 obj intern(const char *name);
 
-/* evaluation */
-obj eval(obj args, obj env);
+/* evaluation / expansion */
+obj eval(obj form, obj env);
+obj expand(obj form, obj env);
 
 /* string : dup/copy/create */
 obj str_dup(obj s);

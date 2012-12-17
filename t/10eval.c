@@ -1,4 +1,5 @@
 #include "assert.h"
+#include <string.h>
 
 static void
 test_eval(void)
@@ -20,6 +21,7 @@ test_eval(void)
 		setv(env, sym, fixnum(42));
 		ok(IS_T(eql(eval(sym, env), fixnum(42))), "(eval x) causes symbol lookup");
 	}
+	on_abort(NULL);
 }
 
 static void
@@ -44,6 +46,7 @@ test_apply(void)
 	on_abort(&comeback);
 
 	if (setjmp(comeback) == 0) {
+		ok(1, "test...");
 		op_call(NULL, env);
 		fail("op_call(NULL) should abort");
 		diag("op_call(NULL) did not abort");

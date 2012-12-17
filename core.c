@@ -472,6 +472,26 @@ again:
 			val = read_list(io, env);
 			if (QQ && !QQ_ESC) {
 				val = cons(intern("list"), val);
+
+			} else if (car(val) == intern("macro")) { /* defining a macro */
+				debug1("defining macro\n");
+				/* FIXME: check that form is ('macro name args body) */
+
+				obj name = car(cdr(val));
+				obj def = cdr(cdr(val));
+				debug1("macro name is %s\n", cdump(name));
+
+				obj m = OBJECT(OBJ_MACRO, 0);
+				M_PARAMS(m) = car(def);
+				M_BODY(m)   = cons(intern("do"), cdr(def));
+				debug1("macro params are %s\n", cdump(M_PARAMS(m)));
+				debug1("macro body is %s\n", cdump(M_BODY(m)));
+
+				setm(env, name, m);
+				val = T;
+
+			} else {
+				val = expand(val, env);
 			}
 			break;
 
@@ -576,6 +596,12 @@ vdump_x(obj str, obj what)
 				strf(str, "<#:lambda:%p:#>", what);
 				break;
 
+			case OBJ_MACRO:
+				strf(str, "<#:macro:%p:%s:%s:#>", what,
+						cdump(M_PARAMS(what)),
+						cdump(M_BODY(what)));
+				break;
+
 			default:
 				strf(str, "<#:UNKNOWN:%x:%p:#>", TYPE(what), what);
 				break;
@@ -613,7 +639,10 @@ car(obj cons)
 {
 	if (!cons) abort("car() called with NULL cons");
 	if (IS_NIL(cons)) return NIL;
-	if (!IS_CONS(cons)) abort("car() called with non-cons arg");
+	if (!IS_CONS(cons)) {
+		debug1("car() called with non-cons arg: %s\n", cdump(cons));
+		abort("car() called with non-cons arg");
+	}
 
 	return CAR(cons);
 }
@@ -661,8 +690,20 @@ assoc(obj key, obj alist)
 {
 	obj x;
 	for_list(x, alist) {
-		if (equal(key, car(car(x)))) {
+		if (IS_T(equal(key, car(car(x))))) {
 			return cdr(car(x));
+		}
+	}
+	return NIL;
+}
+
+obj
+assocp(obj key, obj alist)
+{
+	obj x;
+	for_list(x, alist) {
+		if (IS_T(equal(key, car(car(x))))) {
+			return T;
 		}
 	}
 	return NIL;
@@ -770,6 +811,10 @@ eval(obj args, obj env)
 			debug1("calling eval again, args = %s\n", cdump(car(args)));
 			return eval(car(args), env);
 
+		} else if (head == intern("expand")) {
+			debug2("Eval::expand (that's so meta)\n");
+			return eval(expand(car(args), env), env);
+
 		/* (set x value) */
 		} else if (head == intern("set")) {
 			debug2("Eval::set\n");
@@ -836,14 +881,6 @@ eval(obj args, obj env)
 			L_BODY(l)   = car(cdr(args));
 			return l;
 
-		/* (macro name (args) body of forms) -> ... */
-		} else if (head == intern("macro")) { /* FIXME: this should go in readx */
-			debug2("eval::macro\n");
-			obj m = OBJECT(OBJ_MACRO, 0);
-			M_PARAMS(m) = car(args);
-			M_BODY(m)   = car(cdr(args));
-			return m;
-
 		/* normal function application */
 		} else {
 			debug2("eval::[%s]\n", cdump(head));
@@ -858,6 +895,73 @@ eval(obj args, obj env)
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
 	abort("eval not finished");
+}
+
+obj
+_dequote(obj form, obj alist)
+{
+	obj final, x, term;
+	final = NIL;
+	debug1("dequoting: %s\n", cdump(form));
+	for_list(x, form) {
+		term = car(x);
+		if (IS_CONS(term) && car(term) == intern("quote")) {
+			debug1("dequote: found quoted thing %s\n", cdump(term));
+			final = cons(cdr(term), final);
+		} else if (IS_CONS(term)) {
+			debug1("dequote: found list thing %s\n", cdump(term));
+			final = cons(_dequote(term, alist), final);
+		} else if (IS_SYMBOL(term) && IS_T(assocp(term, alist))) {
+			debug1("dequote: found symbol thing %s\n", cdump(term));
+			final = cons(assoc(term, alist), final);
+		} else {
+			debug1("dequote: found other thing %s\n", cdump(term));
+			final = cons(term, final);
+		}
+	}
+	debug1("dequote final: %s\n", cdump(final));
+	return revl(final);
+}
+
+obj
+_pairlis(obj a, obj b)
+{
+	obj lst, a1, b1;
+	lst = NIL;
+	for (a1 = a,         b1 = b;
+		 !IS_NIL(a1) && !IS_NIL(b1);
+		 a1 = cdr(a1),   b1 = cdr(b1)) {
+
+		lst = acons(car(a1), car(b1), lst);
+	}
+	return revl(lst);
+}
+
+obj
+expand(obj form, obj env)
+{
+	if (IS_NIL(form)) {
+		return form;
+	}
+
+	if (!IS_T(assocp(car(form), ENV_M(env)))) {
+		debug1("%s not a macro form; returning as-is\n", cdump(form));
+		return form;
+	}
+
+	debug1("EXPANDING %s\n", cdump(form));
+	obj macro = getm(env, car(form));
+	debug1("macro is %s\n", cdump(macro));
+
+	obj alist = _pairlis(M_PARAMS(macro), cdr(form));
+	debug1("pairlis is %s\n", cdump(alist));
+
+	env_new(env);
+	CAR(ENV_V(env)) = alist;
+
+	obj exp = eval(M_BODY(macro), env);
+	debug1("expanded form is %s\n", cdump(exp));
+	return exp;
 }
 
 /**  String Handling  *******************************************/

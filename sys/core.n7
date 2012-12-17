@@ -5,70 +5,58 @@
                ,args
                ,body)))
 
-(set K
-  (lambda (x)
-    x))
+(fn K (x) x)
 
-(set not
-  (lambda (test)
-    (eq test nil)))
+(fn not (x)
+    (eq x nil))
 
-(set nil?
-  (lambda (x)
-    (eq x nil)))
+(fn nil? (x)
+    (not x))
 
-(set ne
-  (lambda (x y)
-    (not (eq x y))))
+(fn ne (x y)
+    (not (eq x y)))
 
-(set is-a?
-  (lambda (vtype obj)
-    (eq vtype (typeof obj))))
+(fn is-a? (type obj)
+    (eq type (typeof obj)))
 
-(set cons?
-  (lambda (obj)
-    (is-a? 'cons obj)))
+(fn cons? (obj)
+    (is-a? 'cons obj))
 
-(set atom?
-  (lambda (obj)
-    (not (cons? obj))))
+(fn atom? (obj)
+    (not (cons? obj)))
 
-(set fn?
-  (lambda (obj)
-    (is-a? 'function obj)))
+(fn fn? (obj)
+    (is-a? 'function obj))
 
-(set sym?
-  (lambda (obj)
-    (is-a? 'symbol obj)))
+(fn sym? (obj)
+    (is-a? 'symbol obj))
 
-(set num?
-  (lambda (obj)
-    (is-a? 'fixnum obj)))
+(fn num? (obj)
+    (is-a? 'fixnum obj))
 
-(set string?
-  (lambda (obj)
-    (is-a? 'string obj)))
+(fn string? (obj)
+    (is-a? 'string obj))
 
-(set <= (lambda (x y)
-          (or (eql x y) (< x y))))
-(set >= (lambda (x y)
-          (or (eql x y) (> x y))))
+(fn <= (x y)
+    (or (eql x y) (< x y)))
+
+(fn >= (x y)
+    (or (eql x y) (> x y)))
 
 (set *N7-DEBUG-LEVEL* 0)
-(set n/debugx
-  (lambda (n msg)
+(fn n/debugx (n msg)
     (if (nil? msg)
       (set *N7-DEBUG-LEVEL* n)
       (if (>= n *N7-DEBUG-LEVEL*)
-        (apply 'prs msg)))))
+        (apply 'prs msg))))
 
-(set caar (lambda (l) (car (car l))))
-(set cadr (lambda (l) (car (cdr l))))
-(set cdar (lambda (l) (cdr (car l))))
-(set cddr (lambda (l) (cdr (cdr l))))
+(fn caar (l) (car (car l)))
+(fn cadr (l) (car (cdr l)))
+(fn cdar (l) (cdr (car l)))
+(fn cddr (l) (cdr (cdr l)))
 
-(set ++ (lambda (x) (+ 1 x)))
-(set -- (lambda (x) (- 1 x)))
+(fn ++ (x) (+ 1 x))
+(fn -- (x) (- 1 x))
 
 ;(fun nil? (x)
 ;     (eq x nil))

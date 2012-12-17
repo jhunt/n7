@@ -10,12 +10,16 @@
 int main(int argc, char **argv)
 {
 	int dbg = 0;
+	int handler = 1;
 	char opt;
-	while ((opt = getopt(argc, argv, "d")) != -1) {
+	while ((opt = getopt(argc, argv, "dx")) != -1) {
 		switch (opt) {
 		case 'd':
 			dbg++;
 			if (dbg > 3) { dbg = 3; }
+			break;
+		case 'x':
+			handler = 0;
 			break;
 		default:
 			fprintf(stderr, "Usage: %s [-d[+]] < script\n", argv[0]);
@@ -49,10 +53,12 @@ int main(int argc, char **argv)
 	obj result;
 
 	if (INTERACTIVE) {
-		if (setjmp(err) != 0) {
-			printf("aborted.  retrying...\n");
-		} else {
-			on_abort(&err);
+		if (handler) {
+			if (setjmp(err) != 0) {
+				printf("aborted.  retrying...\n");
+			} else {
+				on_abort(&err);
+			}
 		}
 
 		PROMPT();
