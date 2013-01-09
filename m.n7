@@ -1,0 +1,145 @@
+;;
+;; m.n7 - M, the definition language for N
+;; 
+(.set! ~caar
+  (.lambda (lst)
+    (-car (-car lst))))
+
+(.set! ~cadr
+  (.lambda (lst)
+    (-cons 1 2)
+    (-car (-cdr lst))))
+
+(.set! ~cdar
+  (.lambda (lst)
+    (-cdr (-car lst))))
+
+(.set! ~cddr
+  (.lambda (lst)
+    (-cdr (-cdr lst))))
+
+(.set! ~caddr
+  (.lambda (lst)
+    (-car (-cdr (-cdr lst)))))
+
+(.set! ~cadddr
+  (.lambda (lst)
+    (-car (-cdr (-cdr (-cdr lst))))))
+
+(.set! ~isa?
+  (.lambda (type x)
+    (-eq? (-typeof x) type)))
+
+(.set! ~null?     (.lambda (x) (.if x T NIL)))
+(.set! ~symbol?   (.lambda (x) (~isa? (.quote symbol)   x)))
+(.set! ~pair?     (.lambda (x) (~isa? (.quote cons)     x)))
+(.set! ~function? (.lambda (x) (~isa? (.quote function) x)))
+(.set! ~number?   (.lambda (x) (~isa? (.quote number)   x)))
+(.set! ~string?   (.lambda (x) (~isa? (.quote string)   x)))
+(.set! ~char?     (.lambda (x) (~isa? (.quote char)     x)))
+(.set! ~boolean?  (.lambda (x) (~isa? (.quote boolean)  x)))
+(.set! ~literal?
+  (.lambda (x)
+    (.if (~number? x)
+         T
+         (.if (~string? x)
+              T
+              (.if (~char? x)
+                   T
+                   (.if (~boolean? x)
+                        T
+                        NIL))))))
+
+(.set! ~eval.1
+  (.lambda (e env)
+    (.if (~pair? e)
+         ;; (quote x)
+         (.if (-eq? (-car e) (.quote quote))
+              (~cadr e)
+              ;; (if test then else)
+              (.if (-eq? (-car e) (.quote if))
+                   (.if (~eval.1 (~cadr e) env)
+                        (~eval.1 (~caddr e) env)
+                        (~eval.1 (~cadddr e) env))
+                   ;; (set! name value)
+                   (.if (-eq? (-car e) (.quote set!))
+                        (~eset (~cadr e) env (~eval.1 (~caddr e) env))
+                        ;; (do exprs) <-- should be a macro expanding to if+recursion
+                        (.if (-eq? (-car e) (.quote do))
+                             (~eprogn (-cdr e) env)
+                             ;; (lambda (args) exprs)
+                             (.if (-eq? (-car e) (.quote lambda))
+                                  (~mkfunc (~cadr e) (~cddr e) env)
+                                  ;; (<FUNC> args)
+                                  (~invoke (~eval.1 (-car e) env)
+                                          (~evlis (-cdr e) env)))))))
+         ;; x
+         (.if (~symbol? e)
+              (~lookup e env)
+              ;; 1, "test", etc.
+              (.if (~literal? e)
+                   e
+                   ;; umm.. what?
+                   (-fail "Cannot eval.1" e))))))
+
+(.set! ~eprogn
+  (.lambda (e env)
+    (.if (~pair? e)
+         (.if (~eval.1 (-car e) env)
+              (~eprogn (-cdr e) env)
+              (~eprogn (-cdr e) env))
+         NIL)))
+
+(.set! ~lookup
+  (.lambda (sym env)
+    (.if (~pair? env)
+         (.if (-eq? (~caar env) sym)
+              (~cdar env)
+              (~lookup sym (-cdr env)))
+         (-fail "No such binding" sym))))
+
+(.set! ~evlis
+  (.lambda (exprs env)
+    (.if (~pair? exprs)
+         ((.lambda (var) (-cons var (~evlis (-cdr exprs) env)))
+          (~eval.1 (-car exprs) env))
+         (.quote ()))))
+
+(.set! ~extend
+  (.lambda (env vars vals)
+     (.if (~pair? vars)
+          (.if (~pair? vals)
+               (-cons (-cons (-car vars) (-car vals))
+                      (~extend env (-cdr vars) (-cdr vals)))
+               (-fail "Too few values"))
+          (.if (~null? vars)
+               (.if (~null? vals)
+                    env
+                    (-fail "Too many values"))
+               (.if (~symbol? vars)
+                    (-cons (-cons vars vals) env)
+                    (-fail "No idea how to extend..."))))))
+
+(.set! ~mkfunc
+  (.lambda (args body env)
+    (.lambda (vals)
+      (~eprogn body (~extend env args vals)))))
+
+(.set! ~invoke
+  (.lambda (func args)
+    (.if (~fn? func)
+         (func args)
+         (-fail "Not a function" func))))
+
+(.set! ~set
+  (.lambda (sym env value)
+    (.if (~pair? env)
+         (.if (-eq? sym (~caar env))
+              (~eprogn (-set-cdr (-car env) value)
+                       value)
+              (~set sym (-cdr env) value))
+         (-fail "No such binding" sym))))
+
+;; NEED:
+;;  - print operator
+;;  - repl
