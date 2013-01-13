@@ -13,8 +13,15 @@
 static void
 abort1(const char *msg)
 {
-	fprintf(stderr, "ABORT: %s\n", msg);
+	fprintf(stderr, "M.0 ABORT: %s\n", msg);
 	exit(42);
+}
+
+static void
+abortM(const char *msg)
+{
+	fprintf(stderr, "M.1 ABORT: %s\n", msg);
+	exit(43);
 }
 
 static obj
@@ -271,7 +278,7 @@ obj
 readf(FILE *io, obj env)
 {
 	char *token, c;
-	obj val;
+	obj val = NIL;
 
 	token = NULL;
 
@@ -453,10 +460,6 @@ extend(obj env, obj vars, obj vals)
 			if (vars->type == TYPE_SYMBOL) {
 				return cons(cons(vars, vals), env);
 			} else {
-				fprintf(stderr, "extend failed!\nvals: ");
-				dumpx(stderr, vals); fprintf(stderr, "\n");
-				fprintf(stderr, "vars: ");
-				dumpx(stderr, vars); fprintf(stderr, "\n");
 				abort1("No idea how to extend this");
 			}
 		}
@@ -546,8 +549,27 @@ eval(obj args, obj env)
 			(car(rest))->val.cons.cdr = car(cdr(rest));
 			return (car(rest))->val.cons.cdr;
 
+		} else if (head == intern("-readf")) {
+			rest = readf(stdin, env);
+			return rest;
+			return readf(stdin, env);
+
+		} else if (head == intern("-writef")) {
+			rest = evlis(rest, env);
+			obj term;
+			for_list(term, rest) {
+				dumpx(stdout, car(term));
+				fprintf(stdout, "\n");
+			}
+			return T;
+
+		} else if (head == intern("-print")) {
+			rest = evlis(rest, env);
+			printf("%s", (car(rest))->val.string.data);
+			return T;
+
 		} else if (head == intern("-fail")) {
-			abort1(car(rest)->val.string.data);
+			abortM(car(rest)->val.string.data);
 
 		/* normal function application */
 		} else {

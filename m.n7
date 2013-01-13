@@ -127,7 +127,7 @@
 
 (.set! ~invoke
   (.lambda (func args)
-    (.if (~fn? func)
+    (.if (~function? func)
          (func args)
          (-fail "Not a function" func))))
 
@@ -140,6 +140,24 @@
               (~set sym (-cdr env) value))
          (-fail "No such binding" sym))))
 
-;; NEED:
-;;  - print operator
-;;  - repl
+(.set! *env* (.quote ()))
+(.set! ~defprim
+  (.lambda (name body)
+    (.set! *env* (~extend *env* name body))))
+
+(~defprim (.quote car)
+          (.lambda (c) (-car c)))
+(~defprim (.quote cdr)
+          (.lambda (c) (-cdr c)))
+(~defprim (.quote cons)
+          (.lambda (a d) (-cons a d)))
+
+(.set! m1/repl
+  (.lambda ()
+    (-print "m:> ")
+    (-writef (~eval.1 (-readf) *env*))
+    (m1/repl)))
+
+(m1/repl)
+
+;; ~eset requires continuations κ and memory σ/ρ
