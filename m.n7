@@ -1,163 +1,175 @@
 ;;
 ;; m.n7 - M, the definition language for N
 ;; 
-(.set! ~caar
-  (.lambda (lst)
-    (-car (-car lst))))
+(m0:set! m1:caar
+  (m0:lambda (lst)
+    (m0:car (m0:car lst))))
 
-(.set! ~cadr
-  (.lambda (lst)
-    (-cons 1 2)
-    (-car (-cdr lst))))
+(m0:set! m1:cadr
+  (m0:lambda (lst)
+    (m0:cons 1 2)
+    (m0:car (m0:cdr lst))))
 
-(.set! ~cdar
-  (.lambda (lst)
-    (-cdr (-car lst))))
+(m0:set! m1:cdar
+  (m0:lambda (lst)
+    (m0:cdr (m0:car lst))))
 
-(.set! ~cddr
-  (.lambda (lst)
-    (-cdr (-cdr lst))))
+(m0:set! m1:cddr
+  (m0:lambda (lst)
+    (m0:cdr (m0:cdr lst))))
 
-(.set! ~caddr
-  (.lambda (lst)
-    (-car (-cdr (-cdr lst)))))
+(m0:set! m1:caddr
+  (m0:lambda (lst)
+    (m0:car (m0:cdr (m0:cdr lst)))))
 
-(.set! ~cadddr
-  (.lambda (lst)
-    (-car (-cdr (-cdr (-cdr lst))))))
+(m0:set! m1:cadddr
+  (m0:lambda (lst)
+    (m0:car (m0:cdr (m0:cdr (m0:cdr lst))))))
 
-(.set! ~isa?
-  (.lambda (type x)
-    (-eq? (-typeof x) type)))
+(m0:set! m1:isa?
+  (m0:lambda (type x)
+    (m0:eq? (m0:typeof x) type)))
 
-(.set! ~null?     (.lambda (x) (.if x T NIL)))
-(.set! ~symbol?   (.lambda (x) (~isa? (.quote symbol)   x)))
-(.set! ~pair?     (.lambda (x) (~isa? (.quote cons)     x)))
-(.set! ~function? (.lambda (x) (~isa? (.quote function) x)))
-(.set! ~number?   (.lambda (x) (~isa? (.quote number)   x)))
-(.set! ~string?   (.lambda (x) (~isa? (.quote string)   x)))
-(.set! ~char?     (.lambda (x) (~isa? (.quote char)     x)))
-(.set! ~boolean?  (.lambda (x) (~isa? (.quote boolean)  x)))
-(.set! ~literal?
-  (.lambda (x)
-    (.if (~number? x)
+(m0:set! m1:null?     (m0:lambda (x) (m0:if x T NIL)))
+(m0:set! m1:symbol?   (m0:lambda (x) (m1:isa? (m0:quote symbol)   x)))
+(m0:set! m1:pair?     (m0:lambda (x) (m1:isa? (m0:quote cons)     x)))
+(m0:set! m1:function? (m0:lambda (x) (m1:isa? (m0:quote function) x)))
+(m0:set! m1:number?   (m0:lambda (x) (m1:isa? (m0:quote number)   x)))
+(m0:set! m1:string?   (m0:lambda (x) (m1:isa? (m0:quote string)   x)))
+(m0:set! m1:char?     (m0:lambda (x) (m1:isa? (m0:quote char)     x)))
+(m0:set! m1:boolean?  (m0:lambda (x) (m1:isa? (m0:quote boolean)  x)))
+(m0:set! m1:literal?
+  (m0:lambda (x)
+    (m0:if (m1:number? x)
          T
-         (.if (~string? x)
+         (m0:if (m1:string? x)
               T
-              (.if (~char? x)
+              (m0:if (m1:char? x)
                    T
-                   (.if (~boolean? x)
+                   (m0:if (m1:boolean? x)
                         T
                         NIL))))))
 
-(.set! ~eval.1
-  (.lambda (e env)
-    (.if (~pair? e)
+(m0:set! m1:eval.1
+  (m0:lambda (e env)
+    (m0:if (m1:pair? e)
          ;; (quote x)
-         (.if (-eq? (-car e) (.quote quote))
-              (~cadr e)
+         (m0:if (m0:eq? (m0:car e) (m0:quote quote))
+              (m1:cadr e)
               ;; (if test then else)
-              (.if (-eq? (-car e) (.quote if))
-                   (.if (~eval.1 (~cadr e) env)
-                        (~eval.1 (~caddr e) env)
-                        (~eval.1 (~cadddr e) env))
+              (m0:if (m0:eq? (m0:car e) (m0:quote if))
+                   (m0:if (m1:eval.1 (m1:cadr e) env)
+                        (m1:eval.1 (m1:caddr e) env)
+                        (m1:eval.1 (m1:cadddr e) env))
                    ;; (set! name value)
-                   (.if (-eq? (-car e) (.quote set!))
-                        (~eset (~cadr e) env (~eval.1 (~caddr e) env))
+                   (m0:if (m0:eq? (m0:car e) (m0:quote set!))
+                        (m1:eset (m1:cadr e) env (m1:eval.1 (m1:caddr e) env))
                         ;; (do exprs) <-- should be a macro expanding to if+recursion
-                        (.if (-eq? (-car e) (.quote do))
-                             (~eprogn (-cdr e) env)
+                        (m0:if (m0:eq? (m0:car e) (m0:quote do))
+                             (m1:eprogn (m0:cdr e) env)
                              ;; (lambda (args) exprs)
-                             (.if (-eq? (-car e) (.quote lambda))
-                                  (~mkfunc (~cadr e) (~cddr e) env)
+                             (m0:if (m0:eq? (m0:car e) (m0:quote lambda))
+                                  (m1:mkfunc (m1:cadr e) (m1:cddr e) env)
                                   ;; (<FUNC> args)
-                                  (~invoke (~eval.1 (-car e) env)
-                                          (~evlis (-cdr e) env)))))))
+                                  (m1:invoke (m1:eval.1 (m0:car e) env)
+                                          (m1:evlis (m0:cdr e) env)))))))
          ;; x
-         (.if (~symbol? e)
-              (~lookup e env)
+         (m0:if (m1:symbol? e)
+              (m1:lookup e env)
               ;; 1, "test", etc.
-              (.if (~literal? e)
+              (m0:if (m1:literal? e)
                    e
                    ;; umm.. what?
-                   (-fail "Cannot eval.1" e))))))
+                   (m0:abort "Cannot eval.1" e))))))
 
-(.set! ~eprogn
-  (.lambda (e env)
-    (.if (~pair? e)
-         (.if (~eval.1 (-car e) env)
-              (~eprogn (-cdr e) env)
-              (~eprogn (-cdr e) env))
+(m0:set! m1:eprogn
+  (m0:lambda (e env)
+    (m0:if (m1:pair? e)
+         (m0:if (m1:eval.1 (m0:car e) env)
+              (m1:eprogn (m0:cdr e) env)
+              (m1:eprogn (m0:cdr e) env))
          NIL)))
 
-(.set! ~lookup
-  (.lambda (sym env)
-    (.if (~pair? env)
-         (.if (-eq? (~caar env) sym)
-              (~cdar env)
-              (~lookup sym (-cdr env)))
-         (-fail "No such binding" sym))))
+(m0:set! m1:lookup
+  (m0:lambda (sym env)
+    (m0:if (m1:pair? env)
+         (m0:if (m0:eq? (m1:caar env) sym)
+              (m1:cdar env)
+              (m1:lookup sym (m0:cdr env)))
+         (m0:abort "No such binding" sym))))
 
-(.set! ~evlis
-  (.lambda (exprs env)
-    (.if (~pair? exprs)
-         ((.lambda (var) (-cons var (~evlis (-cdr exprs) env)))
-          (~eval.1 (-car exprs) env))
-         (.quote ()))))
+(m0:set! m1:evlis
+  (m0:lambda (exprs env)
+    (m0:if (m1:pair? exprs)
+         ((m0:lambda (var) (m0:cons var (m1:evlis (m0:cdr exprs) env)))
+          (m1:eval.1 (m0:car exprs) env))
+         (m0:quote ()))))
 
-(.set! ~extend
-  (.lambda (env vars vals)
-     (.if (~pair? vars)
-          (.if (~pair? vals)
-               (-cons (-cons (-car vars) (-car vals))
-                      (~extend env (-cdr vars) (-cdr vals)))
-               (-fail "Too few values"))
-          (.if (~null? vars)
-               (.if (~null? vals)
+(m0:set! m1:extend
+  (m0:lambda (env vars vals)
+     (m0:if (m1:pair? vars)
+          (m0:if (m1:pair? vals)
+               (m0:cons (m0:cons (m0:car vars) (m0:car vals))
+                      (m1:extend env (m0:cdr vars) (m0:cdr vals)))
+               (m0:abort "Too few values"))
+          (m0:if (m1:null? vars)
+               (m0:if (m1:null? vals)
                     env
-                    (-fail "Too many values"))
-               (.if (~symbol? vars)
-                    (-cons (-cons vars vals) env)
-                    (-fail "No idea how to extend..."))))))
+                    (m0:abort "Too many values"))
+               (m0:if (m1:symbol? vars)
+                    (m0:cons (m0:cons vars vals) env)
+                    (m0:abort "No idea how to extend..."))))))
 
-(.set! ~mkfunc
-  (.lambda (args body env)
-    (.lambda (vals)
-      (~eprogn body (~extend env args vals)))))
+(m0:set! m1:mkfunc
+  (m0:lambda (args body env)
+    (m0:lambda (vals)
+      (m1:eprogn body (m1:extend env args vals)))))
 
-(.set! ~invoke
-  (.lambda (func args)
-    (.if (~function? func)
+(m0:set! m1:invoke
+  (m0:lambda (func args)
+    (m0:if (m1:function? func)
          (func args)
-         (-fail "Not a function" func))))
+         (m0:abort "Not a function" func))))
 
-(.set! ~set
-  (.lambda (sym env value)
-    (.if (~pair? env)
-         (.if (-eq? sym (~caar env))
-              (~eprogn (-set-cdr (-car env) value)
+(m0:set! m1:set
+  (m0:lambda (sym env value)
+    (m0:if (m1:pair? env)
+         (m0:if (m0:eq? sym (m1:caar env))
+              (m1:eprogn (m0:set-cdr (m0:car env) value)
                        value)
-              (~set sym (-cdr env) value))
-         (-fail "No such binding" sym))))
+              (m1:set sym (m0:cdr env) value))
+         (m0:abort "No such binding" sym))))
 
-(.set! *env* (.quote ()))
-(.set! ~defprim
-  (.lambda (name body)
-    (.set! *env* (~extend *env* name body))))
+(m0:set! *env* (m0:quote ()))
+(m0:set! *env* (m1:extend *env* (m0:quote T)   (m0:quote T)))
+(m0:set! *env* (m1:extend *env* (m0:quote NIL) (m0:quote NIL)))
 
-(~defprim (.quote car)
-          (.lambda (c) (-car c)))
-(~defprim (.quote cdr)
-          (.lambda (c) (-cdr c)))
-(~defprim (.quote cons)
-          (.lambda (a d) (-cons a d)))
+(m0:set! *env* (m1:extend *env* (m0:quote car)  (m0:lambda (x) (m0:car x))))
+(m0:set! *env* (m1:extend *env* (m0:quote cdr)  (m0:lambda (x) (m0:cdr x))))
+(m0:set! *env* (m1:extend *env* (m0:quote cons) (m0:lambda (x y) (m0:cons x y))))
 
-(.set! m1/repl
-  (.lambda ()
-    (-print "m:> ")
-    (-writef (~eval.1 (-readf) *env*))
-    (m1/repl)))
+(m0:set! *env* (m1:extend *env* (m0:quote quote) (m0:lambda (x) (m0:quote x))))
 
-(m1/repl)
+(m0:set! *env* (m1:extend *env* (m0:quote type) (m0:lambda (x) (m0:typeof x))))
 
-;; ~eset requires continuations κ and memory σ/ρ
+(m0:set! *env* (m1:extend *env* (m0:quote null?)      m1:null?))
+(m0:set! *env* (m1:extend *env* (m0:quote symbol?)    m1:symbol?))
+(m0:set! *env* (m1:extend *env* (m0:quote pair?)      m1:pair?))
+(m0:set! *env* (m1:extend *env* (m0:quote function?)  m1:function?))
+(m0:set! *env* (m1:extend *env* (m0:quote number?)    m1:number?))
+(m0:set! *env* (m1:extend *env* (m0:quote string?)    m1:string?))
+(m0:set! *env* (m1:extend *env* (m0:quote char?)      m1:char?))
+(m0:set! *env* (m1:extend *env* (m0:quote boolean?)   m1:boolean?))
+(m0:set! *env* (m1:extend *env* (m0:quote literal?)   m1:literal?))
+
+(m0:set! *env* (m1:extend *env* (m0:quote pr1) (m0:lambda (x) (m0:print x))))
+
+(m0:set! m1:repl
+  (m0:lambda ()
+    (m0:print "m:> ")
+    (m0:pr (m1:eval.1 (m0:read) *env*))
+    (m1:repl)))
+
+(m1:repl)
+
+;; m1:eset requires continuations κ and memory σ/ρ

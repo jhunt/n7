@@ -11,12 +11,12 @@
 
 (set m 99)
 (foo +)
-# -> 3
-# -> (+ 1 2), using m and n from the (with ...) block
+; -> 3
+; -> (+ 1 2), using m and n from the (with ...) block
 
 
 
-ALSO, with is a macro.
+; ALSO, with is a macro.
 
 (macro (with defs &rest body)
   `((fn ,(map car defs)
@@ -42,7 +42,7 @@ ALSO, with is a macro.
   (f y)
   (+ x y))
 
-# expands to ->
+; expands to ->
 
 ((fn (x y)
   (do
@@ -53,17 +53,17 @@ ALSO, with is a macro.
 
 
 
-That wraps an anon lambda around the do block, and then calls
-it with the appropriate values.  This is a lot like CL (let ...)
-(but not (let* ...))
+; That wraps an anon lambda around the do block, and then calls
+; it with the appropriate values.  This is a lot like CL (let ...)
+; (but not (let* ...))
 
-DO has to be a special form that evaluates every item in the
-list given it, and then returns the last value as its expr-val
+; DO has to be a special form that evaluates every item in the
+; list given it, and then returns the last value as its expr-val
 
 (do 1 2 3 4)
-# -> 4
+; -> 4
 
 
 
 
-# vim:ft=lisp
+; vim:ft=lisp

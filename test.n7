@@ -1,0 +1,5 @@
+;(-car (-cdr (-cons 1 (-cons 2 NIL))))
+;(~caddr (-cons 1 (-cons 2 (-cons 3 NIL))))
+
+
+(-writef (.quote (1 2 3)))

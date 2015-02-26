@@ -486,17 +486,17 @@ eval(obj args, obj env)
 		obj rest = cdr(args);
 
 		/* (quote x) -> x */
-		if (head == intern(".quote")) {
+		if (head == intern("m0:quote")) {
 			return car(rest);
 
 		/* (set x value) */
-		} else if (head == intern(".set!")) {
+		} else if (head == intern("m0:set!")) {
 			obj v = eval(car(cdr(rest)), env);
 			set(env, car(rest), v);
 			return v;
 
 		/* (if cond (then) (else)) -> do the right thing */
-		} else if (head == intern(".if")) {
+		} else if (head == intern("m0:if")) {
 			obj test = car(rest);
 			obj then = car(cdr(rest));
 			obj othe = car(cdr(cdr(rest)));
@@ -508,30 +508,30 @@ eval(obj args, obj env)
 			}
 
 		/* (lambda (args) body) -> #lambda */
-		} else if (head == intern(".lambda")) {
+		} else if (head == intern("m0:lambda")) {
 			obj l = OBJECT(TYPE_LAMBDA, 0);
 			l->val.lambda.args = car(rest);
 			l->val.lambda.body = cdr(rest);
 			return l;
 
 		/* not-so-special forms */
-		} else if (head == intern("-cons")) {
+		} else if (head == intern("m0:cons")) {
 			rest = evlis(rest, env);
 			return cons(car(rest), car(cdr(rest)));
 
-		} else if (head == intern("-car")) {
+		} else if (head == intern("m0:car")) {
 			rest = evlis(rest, env);
 			return car(car(rest));
 
-		} else if (head == intern("-cdr")) {
+		} else if (head == intern("m0:cdr")) {
 			rest = evlis(rest, env);
 			return cdr(car(rest));
 
-		} else if (head == intern("-eq?")) {
+		} else if (head == intern("m0:eq?")) {
 			rest = evlis(rest, env);
 			return eq(car(rest), car(cdr(rest)));
 
-		} else if (head == intern("-typeof")) {
+		} else if (head == intern("m0:typeof")) {
 			rest = evlis(rest, env);
 			switch ((car(rest))->type) {
 				case TYPE_NIL:    return intern("nil");
@@ -544,17 +544,17 @@ eval(obj args, obj env)
 				default: return NIL;
 			}
 
-		} else if (head == intern("-set-cdr!")) {
+		} else if (head == intern("m0:set-cdr!")) {
 			rest = evlis(rest, env);
 			(car(rest))->val.cons.cdr = car(cdr(rest));
 			return (car(rest))->val.cons.cdr;
 
-		} else if (head == intern("-readf")) {
+		} else if (head == intern("m0:read")) {
 			rest = readf(stdin, env);
 			return rest;
 			return readf(stdin, env);
 
-		} else if (head == intern("-writef")) {
+		} else if (head == intern("m0:pr")) {
 			rest = evlis(rest, env);
 			obj term;
 			for_list(term, rest) {
@@ -563,12 +563,12 @@ eval(obj args, obj env)
 			}
 			return T;
 
-		} else if (head == intern("-print")) {
+		} else if (head == intern("m0:print")) {
 			rest = evlis(rest, env);
 			printf("%s", (car(rest))->val.string.data);
 			return T;
 
-		} else if (head == intern("-fail")) {
+		} else if (head == intern("m0:abort")) {
 			abortM(car(rest)->val.string.data);
 
 		/* normal function application */
