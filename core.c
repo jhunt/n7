@@ -918,6 +918,7 @@ eval(obj args, obj env)
 
 	fprintf(stderr, "  can't eval %s\n", cdump(args));
 	abort("eval not finished");
+	return NIL;
 }
 
 obj
@@ -1379,6 +1380,7 @@ op_gt(obj args, obj env)
 		return (FNUM(x) > FNUM(y) ? T : NIL);
 	}
 	abort("non-numeric gt (>) comparison");
+	return NIL;
 }
 
 obj
@@ -1390,6 +1392,7 @@ op_lt(obj args, obj env)
 		return (FNUM(x) < FNUM(y) ? T : NIL);
 	}
 	abort("non-numeric lt (<) comparison");
+	return NIL;
 }
 
 obj
@@ -1433,6 +1436,8 @@ op_apply(obj args, obj env)
 		debug1("applying function %s\n", cdump(fn));
 		abort("called apply on non-function");
 	}
+
+	return NIL;
 }
 
 obj
@@ -1562,6 +1567,7 @@ opx_load(obj args, obj env)
 		return load(STR_VAL(car(args)), env);
 	}
 	abort("called load without a valid path argument");
+	return NIL;
 }
 
 obj
