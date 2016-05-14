@@ -1,4 +1,4 @@
-#include "assert.h"
+#include "test.h"
 
 static void
 print_ok(obj x, const char *expect, const char *msg)

@@ -1,4 +1,4 @@
-#include "assert.h"
+#include "test.h"
 
 static void
 test_isa_type(void)

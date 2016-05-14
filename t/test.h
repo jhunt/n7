@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
+#include "../core.h"
 
 unsigned int FAILED_TESTS = 0;
 unsigned int TOTAL_TESTS  = 0;
@@ -11,14 +13,14 @@ unsigned int TOTAL_TESTS  = 0;
 unsigned int NEXT_TEST = 1;
 unsigned int PLANNED = 0;
 
-inline void
+static inline void
 run_tests(unsigned int ntests)
 {
 	PLANNED = 1;
 	fprintf(stdout, "1..%u\n", ntests);
 }
 
-inline void
+static inline void
 done_testing(void)
 {
 	if (!PLANNED) {
@@ -26,45 +28,45 @@ done_testing(void)
 	}
 }
 
-inline void
+static inline void
 diag(const char *msg)
 {
 	fprintf(stdout, "# %s\n", msg);
 }
-inline void
+static inline void
 vdiag(char *vstr)
 {
 	diag(vstr);
 	free(vstr);
 }
 
-inline void
+static inline void
 pass(const char *msg)
 {
 	fprintf(stdout, "ok %u - %s\n", ++TOTAL_TESTS, msg);
 }
 
-inline void
+static inline void
 fail(const char *msg)
 {
 	fprintf(stdout, "not ok %u - %s\n", ++TOTAL_TESTS, msg);
 	FAILED_TESTS++;
 }
 
-inline void
+static inline void
 skip(const char *msg)
 {
 	fprintf(stdout, "ok %u # SKIP %s\n", ++TOTAL_TESTS, msg);
 }
 
-inline void
+static inline void
 bail(const char *msg)
 {
 	fprintf(stdout, "Bail out! %s\n", msg);
 	exit(1);
 }
 
-char*
+static char*
 str(const char *fmt, ...)
 {
 	size_t len;
@@ -84,7 +86,7 @@ str(const char *fmt, ...)
 	return buf;
 }
 
-inline void
+static inline void
 ok(int expr, const char *msg)
 {
 	if (expr) {
@@ -96,5 +98,202 @@ ok(int expr, const char *msg)
 	     diag("");
 	}
 }
+
+/* kids, don't ever abuse C like this.  it's wrong. */
+#define __jmpvar__ __I_PROMISE_NEVER_TO_ABUSE_C_MACROS_LIKE_THIS_EVER_AGAIN__
+#define WITH_ABORT_PROTECTION \
+	jmp_buf __jmpvar__; \
+	on_abort(&__jmpvar__); \
+	if (setjmp(__jmpvar__) != 0) { bail("ABORTED ABNORMALLY"); } else
+
+static void
+sym_is(const char *a, const char *b, const char *msg)
+{
+	obj sym1 = intern(a);
+	obj sym2 = intern(b);
+
+	if (sym1 == sym2) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %s @ %p\n", b, sym2));
+	vdiag(str("  expected: %s @ %p\n", a, sym1));
+	     diag("");
+}
+
+static void
+sym_isnt(const char *a, const char *b, const char *msg)
+{
+	obj sym1 = intern(a);
+	obj sym2 = intern(b);
+
+	if (sym1 != sym2) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %s @ %p\n", b, sym2));
+	     diag("  expected: <anything else>");
+	     diag("");
+}
+
+static void
+fixnum_is(obj got, long expect, const char *msg)
+{
+	if (got->value.fixnum == expect) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %li\n", got->value.fixnum));
+	vdiag(str("  expected: %li\n", expect));
+	     diag("");
+}
+
+static void
+fixnum_isnt(obj got, long expect, const char *msg)
+{
+	if (got->value.fixnum != expect) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'\n", msg));
+	vdiag(str("       got: %li\n", got->value.fixnum));
+	     diag("  expected: <anything else>");
+	     diag("");
+}
+
+static void
+vstring_is(obj got, const char *expect, const char *msg)
+{
+	if (!IS_STRING(got)) {
+		fail(msg);
+		     diag("");
+		vdiag(str("  Failed test '%s'", msg));
+		vdiag(str("       got: a non-string"));
+		     diag("");
+		return;
+	}
+
+	if (strcmp(got->value.string.data, expect) == 0) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: '%s'", got->value.string.data));
+	vdiag(str("  expected: '%s'", expect));
+	     diag("");
+}
+
+static void
+vstring_isnt(obj got, const char *expect, const char *msg)
+{
+	if (strcmp(got->value.string.data, expect) != 0) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: '%s'", got->value.string.data));
+	     diag("  expected: anything else...");
+	     diag("");
+}
+
+static void
+obj_equal(obj got, obj exp, const char *msg)
+{
+	if (IS_T(equal(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
+}
+
+static void
+obj_eql(obj got, obj exp, const char *msg)
+{
+	if (IS_T(eql(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
+}
+
+static void
+obj_eq(obj got, obj exp, const char *msg)
+{
+	if (IS_T(eq(got, exp))) {
+		pass(msg);
+		return;
+	}
+
+	fail(msg);
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(got)));
+	vdiag(str("  expected: %s", cdump(exp)));
+	     diag("");
+}
+
+static void
+is_defined(obj x, const char *msg)
+{
+	if (DEF(x)) {
+		pass(msg);
+		return;
+	}
+
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	     diag("       got: <undefined>");
+	     diag("  expected: anything else...");
+	     diag("");
+}
+
+static void
+isnt_defined(obj x, const char *msg)
+{
+	if (!DEF(x)) {
+		pass(msg);
+		return;
+	}
+
+	     diag("");
+	vdiag(str("  Failed test '%s'", msg));
+	vdiag(str("       got: %s", cdump(x)));
+	     diag("  expected: <undefined>");
+	     diag("");
+}
+
 
 #endif

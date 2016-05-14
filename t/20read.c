@@ -1,6 +1,5 @@
+#include "test.h"
 #include <string.h>
-
-#include "assert.h"
 
 extern char *next_token(obj io);
 static obj ENV = NIL;
