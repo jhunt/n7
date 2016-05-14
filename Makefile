@@ -1,9 +1,9 @@
-CFLAGS := -Wall -lc
-CFLAGS := -g
-CFLAGS += -fprofile-arcs -ftest-coverage
-CFLAGS += -lgcov
+N7_CFLAGS := -Wall -g
+N7_CFLAGS += -fprofile-arcs -ftest-coverage
+CFLAGS += $(N7_CFLAGS)
 
-LDFLAGS := -fprofile-arcs
+N7_LDFLAGS := -fprofile-arcs
+LDFLAGS += $(N7_LDFLAGS)
 
 LCOV := lcov --directory . --base-directory .
 GENHTML := genhtml --prefix $(shell dirname `pwd`)

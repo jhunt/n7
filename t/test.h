@@ -13,6 +13,9 @@ unsigned int TOTAL_TESTS  = 0;
 unsigned int NEXT_TEST = 1;
 unsigned int PLANNED = 0;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
 static inline void
 run_tests(unsigned int ntests)
 {
@@ -295,5 +298,6 @@ isnt_defined(obj x, const char *msg)
 	     diag("");
 }
 
+#pragma clang diagnostic pop
 
 #endif

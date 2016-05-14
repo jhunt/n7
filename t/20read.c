@@ -12,7 +12,6 @@ string_is(const char *got, const char *expect, const char *msg)
 		return;
 	}
 
-	char *s;
 	fail(msg);
 	vdiag(str("  Failed test '%s'", msg));
 	vdiag(str("       got: '%s'", got));
