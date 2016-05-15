@@ -35,7 +35,7 @@
 ;
 (macro (with defs &rest body)
   ((fn [map car defs]
-    (do [[body]]) [map cdr defs])))
+    (do {body}) [map cdr defs])))
 
 (with ((x 1) (y 2))
   (f x)

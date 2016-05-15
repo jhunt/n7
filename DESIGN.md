@@ -4,6 +4,114 @@ n7 Design Notes
 This document describes the overall design of the n7 language, the
 n7i interpreter (REPL), and the n7c/n7l compiler/linker.
 
+Tokens
+------
+
+n7 is made up of only a few different types of tokens:
+
+### Identifiers
+
+An identifier is any contiguous run of one or more non-whitespace
+Unicode characters that does not start with a punctuation token
+(see below), the symbol start sigil `:`, the comment character
+';', either quote character (`"` or `'`), or the reserved keyword
+sigil `&`.  Identifiers that look like numerics (see below) are
+interpreted as numerics.  Everything else is fair game.  This
+affords the programmer great latitude in naming variables and
+functions.
+
+Of note, the following are all valid identifiers:
+
+- `+`
+- `even?`
+- `--help`
+- `Ω`
+- `dns.lookup`
+- `Ω/2`
+- `力`
+- `你好-世界`
+- `http/GET`
+- `lib:func`
+
+### Symbols
+
+A symbol token starts with the symbol start sigil, `:`, and ends
+with a contiguous run of one or more non-whitespace Unicode
+characters.
+
+When a new symbol is encountered, a global entry in the symbol
+table will be provisioned for it.  From then on, any reference to
+the same symbol by name will resolve to that symbol table entry,
+regardless of function, file, or module scope.
+
+These are all valid symbols:
+
+- `:symbol`
+- `::`
+- `:+`
+- `:象征`
+- `:12345`
+
+### Numeric Constants
+
+Numeric constants come in a variety of formats.
+
+The following are valid numerics:
+
+- `1234` (integer)
+- `-42`
+- `2/3` (exact irrational)
+- `3.14159` (inexact irrational)
+- `+6.022e23` (scientific notation)
+- `0xdecafbad` (hexadecimal)
+- `0777` (octal)
+- `0110101101101b` (binary)
+
+### Character Literals
+
+Character literals denote a single Unicode codepoint.  Note that
+this does not equate to a single octet, since several codepoints
+require multiple bytes to properly represent them.
+
+The following are valid character literals:
+
+- `'\\0'` (a NUL)
+- `'A'`
+- `'⌘'`
+
+### String Literals
+
+String literals denote text values, and may contain spaces and
+other non-printable characters.  They come in two variants:
+lax and strict.
+
+A lax string begins and ends with a double-quote sigil, `"`.
+Inside of a lax string, the backslash character takes on special
+meaning in a wide variety of circumstances, allowing arbitrary bit
+patterns to be represented with a limited subset (ASCII).
+
+A strict string begins and ends with a back-tick.  Inside of a
+strict string, the backslash character serves only to escape
+itself and to escape the quoting delimiter so that it is treated
+as a literal.
+
+The following are vaid character literals:
+
+- `"A man, a plan"`
+- `"null is \0"`
+- `"\tindented...\n"`
+- ```\\r\\n``` (literal \r\n)
+
+### Punctuation
+
+_Punctuation_ refers to tny unquoted sequence of Unicode
+codepoints that convey special meaning and denote structure in the
+source text.
+
+- `(` and `)` open and close a form
+- `[` and `]` surround an expansion group in a macro definition
+- `{` and `}` delimite a splice group in a macro definition
+
 Compiler Pipeline
 -----------------
 
