@@ -169,3 +169,37 @@ machine is:
 (Note that the `C` flavor is not required for bootstrapping a new
 machine architecture if one has access to a supported architecture
 for which a `self` flavor compiler binary exists.)
+
+Codebase Organization
+---------------------
+
+The codebase directory is organized thusly:
+
+    *
+    ├── c                `C` flavor implementation (for bootstrap)
+    │   ├── backend            (5)-(7) of the compiler pipeline
+    │   ├── frontend           (1)-(4) of the compiler pipeline
+    │   └── linux-amd64       (8)-(10) of the compiler pipeline
+    │
+    └── n7            `self` flavor implementation (for bootstrap)
+        ├── arch
+        │   ├── darwin-amd64
+        │   │   ├── assembler      (9) of the compiler pipeline
+        │   │   ├── linker        (10) of the compiler pipeline
+        │   │   └── targeter       (8) of the compiler pipeline
+        │   └── linux-amd64
+        │       ├── assembler         same, but for a different
+        │       ├── linker             machine architecture and
+        │       └── targeter               operating system pair
+        │
+        ├── backend
+        │   ├── coder              (7) of the compiler pipeline
+        │   ├── generalizer        (5) of the compiler pipeline
+        │   ├── optimizer          (6) of the compiler pipeline
+        │   └── runner             (5) of the interpreter pipeline
+        │
+        └── frontend
+            ├── annotater          (4) of the (shared) pipeline
+            ├── lexer              (2) of the (shared) pipeline
+            ├── parser             (3) of the (shared) pipeline
+            └── reader             (1) of the (shared) pipeline
