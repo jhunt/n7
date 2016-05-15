@@ -18,13 +18,17 @@ The full pipeline of the n7 parser/compiler is as follows:
      [ parser ]
          |
      [ annotater ]
-         |
+         |              frontend
+     ----|----------------------
+         |               backend
      [ generalizer ]
          |
      [ optimizer ]
          |
      [ coder ]
-         |
+         |                          lang-specific
+     ----|---------------------------------------
+         |                        target-specific
      [ targeter ]
          |
      [ assembler ]
@@ -107,7 +111,9 @@ The full pipeline of the n7 interpreter (REPL) is as follows:
      [ parser ]
          |
      [ annotater ]
-         |
+         |              frontend
+     ----|----------------------
+         |               backend
      [ runner ]
          |
          *
