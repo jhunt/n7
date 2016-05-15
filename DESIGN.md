@@ -71,7 +71,7 @@ of higher-level control structures like while loops with jumps and
 tests.  This results in another abstract syntax tree, `ast-2`.
 
 The `optimizer` traverses the `ast-2` tree and attempts to
-simplify the resuling AST even further by (for example) performing
+simplify the resulting AST even further by (for example) performing
 constant-folding operations and replacing static computation with
 the resultant values.  This results in yet another AST, `ast-3`.
 
@@ -95,7 +95,7 @@ more to produce object code.
 
 The `linker` takes the individual units of compilation produced by
 the `assembler` stage(s) and stitches them together into a single
-executable image, performing any necessary backpatching.  Note
+executable image, performing any necessary back-patching.  Note
 that there may be multiple inputs to the linker, from different
 runs of the compiler pipeline up through the `assembler`.
 
@@ -130,7 +130,7 @@ singular state of the world (the memory) against which expressions
 are evaluated.
 
 In interactive mode, the interpreter treats each complete form at
-the top-level as a parseable program that operates in the shared
+the top-level as a complete program that operates in the shared
 context of the REPL session.  Batch mode behaves more like
 compilation, in that the entire source file is read in and parsed
 before being handed off to the `runner`.
