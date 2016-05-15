@@ -111,6 +111,8 @@ source text.
 - `(` and `)` open and close a form
 - `[` and `]` surround an expansion group in a macro definition
 - `{` and `}` delimite a splice group in a macro definition
+- `&` and `#` are reserved characters that cannot appear as
+  the initial character in an identifier.
 
 Compiler Pipeline
 -----------------
