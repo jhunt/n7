@@ -134,3 +134,38 @@ the top-level as a parseable program that operates in the shared
 context of the REPL session.  Batch mode behaves more like
 compilation, in that the entire source file is read in and parsed
 before being handed off to the `runner`.
+
+Bootstrapping The Language
+--------------------------
+
+The implementation of n7 comes in two flavors: `C` and `self`.
+The `C` flavor of n7 is a small, compiler-only implementation
+written in portable, POSIX-compliant C89.  The `self` flavor is
+the obligatory n7-in-n7 implementation, which uses the compiler
+produced by the `C` flavor to compile itself into a hosted
+executable.
+
+The initial bootstrap (done only by the language implementers and
+interested enthusiasts) consists of these steps:
+
+  1. Compile the `C` flavor using your compiler of choice,
+     targeting the hosting machine architecture.
+  2. Use the resulting compiler binary to compile the `self`
+     flavor, targeting the hosting machine architecture.
+  3. Profit.
+
+(It is for this reason that the `C` flavor only needs to implement
+a limited subset of target architectures -- likely only amd64).
+
+The normal flow for bootstrapping the language on a new
+machine is:
+
+  1. Build new targeter, assembler and linker modules for the
+     chosen machine, in the `self` implementation.
+  2. On a supported machine, cross-compile the `self` flavor (with
+     the new targeter code) for the new machine.
+  3. Profit.
+
+(Note that the `C` flavor is not required for bootstrapping a new
+machine architecture if one has access to a supported architecture
+for which a `self` flavor compiler binary exists.)
