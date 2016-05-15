@@ -31,9 +31,9 @@ The full pipeline of the n7 parser/compiler is as follows:
          |                        target-specific
      [ targeter ]
          |
-     [ assembler ]
-         |
-     [ linker ]
+     [ assembler ]         (other jobs)
+         |                 /  /  /  /
+     [ linker ] ----------'--'--'--'
          |
       < executable >
 
@@ -94,8 +94,10 @@ combined with headers, relocation tables, symbol table data and
 more to produce object code.
 
 The `linker` takes the individual units of compilation produced by
-the `assembler` and stitches them together into a single
-executable image, performing any necessary backpatching.
+the `assembler` stage(s) and stitches them together into a single
+executable image, performing any necessary backpatching.  Note
+that there may be multiple inputs to the linker, from different
+runs of the compiler pipeline up through the `assembler`.
 
 Interpreter Pipeline
 --------------------
