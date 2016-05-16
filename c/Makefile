@@ -4,10 +4,10 @@ all: driver
 
 driver: driver.o \
         frontend/reader.o
-	$(CC) -o $@ $+
+	$(CC) $(LDFLAGS) -o $@ $+
 
 %.o: %.c pipeline.h
-	$(CC) -c -o $@ $<
+	$(CC) $(CPPFLAGS) -c $(CFLAGS) -o $@ $<
 
 frontend/reader.o: frontend/reader.c pipeline.h
-	$(CC) -c -o $@ $<
+	$(CC) $(CPPFLAGS) -c $(CFLAGS) -o $@ $<
