@@ -18,7 +18,7 @@ struct reader_opaque {
 };
 
 reader_t reader_new(int fd) {
-	reader_t r = calloc(1, sizeof(reader_t));
+	reader_t r = calloc(1, sizeof(struct reader_opaque));
 	if (!r) {
 		return NULL;
 	}
